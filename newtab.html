@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>~ terminal</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="newtab.css">
+</head>
+<body>
+  <!-- Scanline overlay -->
+  <div class="scanlines"></div>
+
+  <!-- ASCII rain background -->
+  <canvas id="asciiBg" class="ascii-bg"></canvas>
+
+  <!-- Top bar -->
+  <div class="top-bar">
+    <div class="top-left">
+      <span class="distro-icon">⬢</span>
+      <span class="distro-name" id="topBarName"></span>
+      <span class="separator">│</span>
+      <span id="uptime" class="uptime"></span>
+    </div>
+    <div class="top-right">
+      <div id="clock" class="clock"></div>
+    </div>
+  </div>
+
+  <!-- Main terminal -->
+  <div class="terminal-container">
+    <div class="terminal-window">
+      <div class="terminal-titlebar">
+        <div class="terminal-dots">
+          <span class="dot red"></span>
+          <span class="dot yellow"></span>
+          <span class="dot green"></span>
+        </div>
+        <span class="terminal-title"></span>
+        <div class="terminal-titlebar-spacer"></div>
+      </div>
+      <div class="terminal-body" id="terminalBody">
+        <div id="output" class="output"></div>
+        <div class="input-line">
+          <span class="prompt"><span class="user" id="promptUser"></span><span class="at">@</span><span class="host" id="promptHost"></span><span class="colon">:</span><span class="path">~</span><span class="dollar">$</span></span>
+          <input type="text" id="cmdInput" class="cmd-input" autofocus autocomplete="off" spellcheck="false">
+          <div id="autocomplete" class="autocomplete-popup"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mini Calendar -->
+  <div class="calendar-panel" id="calendarPanel">
+    <div class="cal-header">
+      <span class="cal-title" id="calTitle"></span>
+    </div>
+    <div class="cal-grid">
+      <div class="cal-day-header">Mo</div>
+      <div class="cal-day-header">Tu</div>
+      <div class="cal-day-header">We</div>
+      <div class="cal-day-header">Th</div>
+      <div class="cal-day-header">Fr</div>
+      <div class="cal-day-header">Sa</div>
+      <div class="cal-day-header">Su</div>
+    </div>
+    <div class="cal-grid" id="calDays"></div>
+  </div>
+
+  <!-- Todo List -->
+  <div class="todo-panel" id="todoPanel">
+    <div class="todo-header">
+      <span class="todo-title">[ todo ]</span>
+      <button class="todo-add-btn" id="addTodoBtn" title="Add task">+</button>
+    </div>
+    <div class="todo-filters">
+      <button class="todo-filter active" data-filter="all">all</button>
+      <button class="todo-filter" data-filter="high">high</button>
+      <button class="todo-filter" data-filter="low">low</button>
+    </div>
+    <div class="todo-input-row" id="todoInputRow" style="display:none;">
+      <input type="text" id="todoInput" class="todo-input" placeholder="task... (prefix ! for high priority)" autocomplete="off" spellcheck="false">
+    </div>
+    <div id="todoList" class="todo-list"></div>
+    <div class="todo-completed-toggle" id="completedToggle" style="display:none;">
+      <span id="completedToggleBtn">▸ completed (<span id="completedCount">0</span>)</span>
+    </div>
+    <div id="completedList" class="todo-list completed-list" style="display:none;"></div>
+  </div>
+
+  <!-- Sticky Notes -->
+  <div class="sticky-panel" id="stickyPanel">
+    <div class="sticky-header">
+      <span class="sticky-title">[ notes.md ]</span>
+      <div class="sticky-actions">
+        <button class="sticky-btn" id="addNoteBtn" title="Add note">+</button>
+      </div>
+    </div>
+    <div id="notesContainer" class="notes-container"></div>
+  </div>
+
+  <!-- Note editor modal -->
+  <div class="modal-overlay" id="noteModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span>Edit Note</span>
+        <button class="modal-close" id="modalClose">✕</button>
+      </div>
+      <textarea id="noteEditor" class="note-editor" placeholder="Write in markdown..."></textarea>
+      <div class="modal-footer">
+        <button class="modal-btn delete" id="deleteNoteBtn">Delete</button>
+        <button class="modal-btn save" id="saveNoteBtn">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Random fact -->
+  <div class="fact-bar" id="factBar">
+    <span class="fact-icon">▹</span>
+    <span id="factText" class="fact-text">loading...</span>
+  </div>
+
+  <!-- Game overlay -->
+  <div id="gameOverlay" class="game-overlay" style="display:none;">
+    <canvas id="gameCanvas"></canvas>
+    <div id="gameHud" class="game-hud">
+      <span id="gameScore">SCORE: 0</span>
+      <span id="gameLevel">LEVEL: 1</span>
+      <span class="game-esc">ESC to quit</span>
+    </div>
+    <div id="gameStartScreen" class="game-start-screen">
+      <pre class="game-title">
+ ██████   ██████  ██   ██ ██████ ████████
+ ██   ██ ██    ██ ██  ██  ██        ██
+ ██████  ██    ██ █████   █████     ██
+ ██   ██ ██    ██ ██  ██  ██        ██
+ ██   ██  ██████  ██   ██ ██████    ██</pre>
+      <div class="game-subtitle">SPACE DEFENDER</div>
+      <div class="game-controls">↑ ↓ ← → move &nbsp;&nbsp; SPACE shoot</div>
+      <div class="game-press">press SPACE to start</div>
+    </div>
+    <div id="gameOverScreen" class="game-over-screen" style="display:none;">
+      <div class="game-over-title">GAME OVER</div>
+      <div class="game-over-score" id="finalScore">SCORE: 0</div>
+      <div class="game-press">press SPACE to restart &nbsp; ESC to quit</div>
+    </div>
+  </div>
+
+  <script src="newtab.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
