@@ -179,6 +179,45 @@
     renderCalendar();
     setInterval(updateClock, 1000);
     setInterval(updateUptime, 1000);
+
+    // ALT key blur reveal
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Alt') document.body.classList.add('alt-reveal');
+    });
+    document.addEventListener('keyup', e => {
+      if (e.key === 'Alt') document.body.classList.remove('alt-reveal');
+    });
+
+    // Konami code detector
+    const konamiSeq = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+    let konamiIdx = 0;
+    document.addEventListener('keydown', e => {
+      if (e.key === konamiSeq[konamiIdx] || e.key.toLowerCase() === konamiSeq[konamiIdx]) {
+        konamiIdx++;
+        if (konamiIdx === konamiSeq.length) {
+          konamiIdx = 0;
+          triggerKonami();
+        }
+      } else {
+        konamiIdx = 0;
+      }
+    });
+  }
+
+  function triggerKonami() {
+    appendOutput('★ 30 extra lives granted ★', 'success');
+    // Brief rainbow accent cycle
+    const colors = ['#ff0000','#ff8800','#ffff00','#00ff00','#0088ff','#8800ff','#ff00ff'];
+    let i = 0;
+    const originalAccent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+    const interval = setInterval(() => {
+      document.documentElement.style.setProperty('--accent', colors[i % colors.length]);
+      i++;
+      if (i >= colors.length * 2) {
+        clearInterval(interval);
+        document.documentElement.style.setProperty('--accent', originalAccent);
+      }
+    }, 150);
   }
 
   root.core = {

@@ -946,14 +946,19 @@
       });
     });
     ctx.fillStyle = C.yellow;
-    ctx.beginPath();
     const px0 = ox + arcade.player.x * cell + cell / 2;
     const py0 = oy + arcade.player.y * cell + cell / 2;
     const mouth = arcade.player.mouth < 4 ? 0.22 : 0.06;
-    ctx.moveTo(px0, py0);
-    ctx.arc(px0, py0, cell * 0.42, mouth * Math.PI, (2 - mouth) * Math.PI);
+    ctx.save();
+    ctx.translate(px0, py0);
+    const angle = Math.atan2(arcade.dir.y, arcade.dir.x);
+    ctx.rotate(angle);
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, cell * 0.42, mouth * Math.PI, (2 - mouth) * Math.PI);
     ctx.closePath();
     ctx.fill();
+    ctx.restore();
     arcade.ghosts.forEach(g => {
       ctx.fillStyle = arcade.frightened ? C.blue : g.color;
       ctx.fillRect(ox + g.x * cell + 2, oy + g.y * cell + 3, cell - 4, cell - 5);
@@ -963,162 +968,11 @@
     });
   }
 
-  function setupMario() {
-    const groundY = canvas.height - 70;
-    arcade = {
-      mode: 'mario',
-      worldW: 3200,
-      scroll: 0,
-      score: 0,
-      player: { x: 80, y: groundY - 42, w: 28, h: 42, vx: 0, vy: 0, onGround: false, face: 1 },
-      platforms: [
-        { x: 0, y: groundY, w: 620, h: 30, type: 'ground' },
-        { x: 700, y: groundY, w: 520, h: 30, type: 'ground' },
-        { x: 1320, y: groundY, w: 720, h: 30, type: 'ground' },
-        { x: 2150, y: groundY, w: 1050, h: 30, type: 'ground' },
-        { x: 260, y: groundY - 95, w: 130, h: 20, type: 'brick' },
-        { x: 520, y: groundY - 150, w: 150, h: 20, type: 'brick' },
-        { x: 880, y: groundY - 110, w: 160, h: 20, type: 'brick' },
-        { x: 1180, y: groundY - 175, w: 120, h: 20, type: 'brick' },
-        { x: 1500, y: groundY - 120, w: 180, h: 20, type: 'brick' },
-        { x: 1880, y: groundY - 165, w: 160, h: 20, type: 'brick' },
-        { x: 2320, y: groundY - 115, w: 160, h: 20, type: 'brick' },
-        { x: 2600, y: groundY - 170, w: 160, h: 20, type: 'brick' },
-      ],
-      coins: [310, 560, 620, 920, 1220, 1260, 1540, 1620, 1930, 2000, 2360, 2420, 2640, 2700, 2940].map(x => ({ x, y: groundY - 130 - (x % 3) * 24, got: false })),
-      enemies: [470, 820, 1080, 1450, 1760, 2220, 2520, 2840].map(x => ({ x, y: groundY - 26, w: 28, h: 26, alive: true, vx: -1.1, min: x - 90, max: x + 110 })),
-      blocks: [360, 400, 440, 1120, 1160, 1710, 1750, 1790].map(x => ({ x, y: groundY - 185, w: 32, h: 32, hit: false })),
-    };
-  }
-
-  function rectHit(a, b) {
-    return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
-  }
-
-  function updateMario() {
-    const p = arcade.player;
-    const left = keys.ArrowLeft || keys.a || keys.A;
-    const right = keys.ArrowRight || keys.d || keys.D;
-    const jump = keys[' '] || keys.Space || keys.ArrowUp || keys.w || keys.W;
-    p.vx = left ? -4.4 : right ? 4.4 : 0;
-    if (left) p.face = -1;
-    if (right) p.face = 1;
-    if (jump && p.onGround) {
-      p.vy = -12.6;
-      p.onGround = false;
-    }
-    p.vy += 0.58;
-    p.x += p.vx;
-    p.y += p.vy;
-    p.onGround = false;
-    [...arcade.platforms, ...arcade.blocks].forEach(platform => {
-      const prevY = p.y - p.vy;
-      if (p.x < platform.x + platform.w && p.x + p.w > platform.x && prevY + p.h <= platform.y && p.y + p.h >= platform.y) {
-        p.y = platform.y - p.h;
-        p.vy = 0;
-        p.onGround = true;
-      } else if (p.x < platform.x + platform.w && p.x + p.w > platform.x && prevY >= platform.y + platform.h && p.y <= platform.y + platform.h) {
-        p.y = platform.y + platform.h;
-        p.vy = 1;
-        if (platform.hit === false) {
-          platform.hit = true;
-          arcade.score += 75;
-          scoreEl.textContent = `SCORE: ${arcade.score}`;
-        }
-      }
-    });
-    p.x = Math.max(0, Math.min(arcade.worldW - p.w, p.x));
-    if (p.y > canvas.height + 100) arcadeEnd(false);
-    arcade.scroll = Math.max(0, Math.min(arcade.worldW - canvas.width, p.x - canvas.width * 0.36));
-
-    arcade.coins.forEach(coin => {
-      if (!coin.got && Math.abs(p.x + p.w / 2 - coin.x) < 24 && Math.abs(p.y - coin.y) < 46) {
-        coin.got = true;
-        arcade.score += 25;
-        scoreEl.textContent = `SCORE: ${arcade.score}`;
-      }
-    });
-    arcade.enemies.forEach(enemy => {
-      if (!enemy.alive) return;
-      enemy.x += enemy.vx;
-      if (enemy.x < enemy.min || enemy.x > enemy.max) enemy.vx *= -1;
-      if (rectHit(p, enemy)) {
-        if (p.vy > 0 && p.y + p.h - enemy.y < 18) {
-          enemy.alive = false;
-          p.vy = -7;
-          arcade.score += 50;
-          scoreEl.textContent = `SCORE: ${arcade.score}`;
-        } else {
-          arcadeEnd(false);
-        }
-      }
-    });
-    if (p.x > arcade.worldW - 90) arcadeEnd(true);
-  }
-
-  function drawMario() {
-    const s = arcade.scroll;
-    const sky = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    sky.addColorStop(0, '#123047');
-    sky.addColorStop(1, C.bg);
-    ctx.fillStyle = sky;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    for (let i = 0; i < 9; i++) {
-      ctx.fillStyle = 'rgba(255,255,255,0.12)';
-      ctx.fillRect((i * 280 - s * 0.35) % (canvas.width + 240) - 120, 70 + (i % 3) * 42, 90, 18);
-    }
-    arcade.platforms.forEach(platform => {
-      ctx.fillStyle = platform.type === 'ground' ? '#2b8a3e' : '#a0582a';
-      ctx.fillRect(platform.x - s, platform.y, platform.w, platform.h);
-      ctx.fillStyle = platform.type === 'ground' ? '#7fd962' : '#e6b450';
-      for (let x = platform.x; x < platform.x + platform.w; x += 32) {
-        ctx.strokeStyle = 'rgba(10,14,20,0.35)';
-        ctx.strokeRect(x - s, platform.y, 32, platform.h);
-      }
-    });
-    arcade.blocks.forEach(block => {
-      ctx.fillStyle = block.hit ? C.dim : C.yellow;
-      ctx.fillRect(block.x - s, block.y, block.w, block.h);
-      ctx.strokeStyle = C.bg;
-      ctx.strokeRect(block.x - s + 2, block.y + 2, block.w - 4, block.h - 4);
-    });
-    arcade.coins.forEach(coin => {
-      if (!coin.got) {
-        ctx.fillStyle = C.yellow;
-        ctx.beginPath();
-        ctx.ellipse(coin.x - s, coin.y, 7, 12, 0, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    });
-    arcade.enemies.forEach(enemy => {
-      if (enemy.alive) {
-        ctx.fillStyle = '#8d5a2b';
-        ctx.fillRect(enemy.x - s, enemy.y, enemy.w, enemy.h);
-        ctx.fillStyle = C.white;
-        ctx.fillRect(enemy.x - s + 6, enemy.y + 7, 4, 4);
-        ctx.fillRect(enemy.x - s + 18, enemy.y + 7, 4, 4);
-      }
-    });
-    const p = arcade.player;
-    ctx.fillStyle = C.red;
-    ctx.fillRect(p.x - s + 5, p.y, 18, 10);
-    ctx.fillStyle = C.cyan;
-    ctx.fillRect(p.x - s + 4, p.y + 10, 20, 20);
-    ctx.fillStyle = C.cream;
-    ctx.fillRect(p.x - s + 7, p.y + 6, 16, 12);
-    ctx.fillStyle = '#1c6dd0';
-    ctx.fillRect(p.x - s + 5, p.y + 28, 8, 14);
-    ctx.fillRect(p.x - s + 16, p.y + 28, 8, 14);
-    ctx.fillStyle = C.yellow;
-    ctx.fillRect(arcade.worldW - 55 - s, canvas.height - 150, 5, 110);
-    px(arcade.worldW - 50 - s, canvas.height - 150, 32, C.green);
-  }
 
   function setupArcade(gameMode) {
     if (gameMode === 'snake') setupSnake();
     if (gameMode === 'tetris') setupTetris();
     if (gameMode === 'pacman') setupPacman();
-    if (gameMode === 'mario') setupMario();
     scoreEl.textContent = 'SCORE: 0';
     levelEl.textContent = gameMode.toUpperCase();
   }
@@ -1127,7 +981,6 @@
     if (arcade.mode === 'snake') updateSnake(ts);
     if (arcade.mode === 'tetris') updateTetris(ts);
     if (arcade.mode === 'pacman') updatePacman(ts);
-    if (arcade.mode === 'mario') updateMario(ts);
   }
 
   function drawArcade() {
@@ -1135,7 +988,6 @@
     if (arcade.mode === 'snake') drawSnake();
     if (arcade.mode === 'tetris') drawTetris();
     if (arcade.mode === 'pacman') drawPacman();
-    if (arcade.mode === 'mario') drawMario();
     if (state === 'arcade-over') {
       ctx.fillStyle = 'rgba(10,14,20,0.74)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);

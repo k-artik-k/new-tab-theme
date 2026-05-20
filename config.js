@@ -94,6 +94,18 @@
       else appendOutput(`unknown theme: ${escapeHtml(value)}`, 'error');
       return;
     }
+    if (sub === 'startup') {
+      const val = words[2];
+      if (val === 'on' || val === 'off') {
+        config.startupAnim = val === 'on';
+        save();
+        appendOutput(`startup animation: ${val}`, 'success');
+      } else {
+        appendOutput(`startup animation: ${config.startupAnim !== false ? 'on' : 'off'}`, 'info');
+        appendOutput('usage: /config startup on|off', 'info');
+      }
+      return;
+    }
     if (sub === 'storage') {
       appendOutput(`<pre>${escapeHtml(storage.describe().join('\n'))}</pre>`, 'info');
       return;

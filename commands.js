@@ -85,12 +85,16 @@
     ['game chicken hard', 'Chicken Defender hard survival'],
     ['game snake', 'play Snake'],
     ['game pacman', 'play maze game'],
-    ['game mario', 'play platformer'],
+
     ['game tetris', 'play Tetris'],
     ['yt <query>', 'YouTube search'],
     ['gpt <query>', 'ChatGPT prompt'],
     ['rd <subreddit>', 'open subreddit'],
     ['g <query>', 'Google search'],
+    ['blur', 'toggle blur on all panels'],
+    ['blur notes|todo|terminal|facts on|off', 'blur specific panel'],
+    ['reset', 'reset all data with confirmation'],
+    ['config startup on|off', 'toggle boot animation'],
   ];
 
   function allShortcuts() {
@@ -165,13 +169,15 @@
   function showHelp(topic) {
     const groups = {
       search: ['yt <query>', 'gpt <query>', 'rd <subreddit>', 'g <query>', '<bare text>'],
-      config: ['config', 'config user <name>', 'config host <name>', 'config distro <name>', 'config theme <color|#hex>', 'config storage'],
-      shortcuts: ['shortcut list', 'shortcut add <name> <url> [description]', 'shortcut delete <name>', 'shortcut restore <name>'],
-      rain: ['rain on|off', 'rain preset mist|calm|storm', 'rain intensity <0-100>', 'rain wind <dir|degrees> <0-100>', 'rain sound on|off', 'rain thunder on|off'],
-      facts: ['fact', 'fact mode science|tech|weird|context|mixed', 'fact cache'],
-      todo: ['todo list [active|done|high|low]', 'todo add <task> [!] [due:YYYY-MM-DD] [recur:daily] [50%]', 'todo done <id>', 'todo delete <id>', 'todo move <from> <to>', 'todo due <id> today|tomorrow|YYYY-MM-DD|clear', 'todo recur <id> none|daily|weekly|monthly', 'todo progress <id> <0-100>'],
-      timer: ['pomodoro start [minutes]', 'pomodoro pause', 'pomodoro stop', 'pomodoro status'],
-      games: ['game chicken easy|medium|hard', 'game snake', 'game pacman', 'game mario', 'game tetris'],
+      config: ['config', 'config user|host|distro <name>', 'config theme <color|#hex>', 'config startup on|off', 'config storage'],
+      shortcuts: ['shortcut list|add|delete|restore'],
+      rain: ['rain on|off', 'rain preset mist|calm|storm', 'rain intensity|wind|sound|thunder'],
+      facts: ['fact', 'fact mode science|tech|weird|context|mixed'],
+      todo: ['todo list|add|done|delete|move|due|recur|progress|clear-done'],
+      timer: ['pomodoro start|pause|stop|status'],
+      games: ['game chicken easy|medium|hard', 'game snake', 'game pacman', 'game tetris'],
+      privacy: ['blur', 'blur notes|todo|terminal|facts on|off'],
+      system: ['reset', 'clear', 'history', 'neofetch', 'uname'],
     };
 
     if (topic && groups[topic]) {
@@ -179,13 +185,13 @@
       return;
     }
 
-    let text = 'TabOS command help\n\n';
+    let text = '';
     Object.entries(groups).forEach(([name, lines]) => {
       text += `${name}\n`;
       lines.forEach(line => { text += `  /${line}\n`; });
       text += '\n';
     });
-    text += 'Shortcuts also work directly, for example /yt or /github.\nUse Tab to complete commands. Type /help todo for a smaller section.';
+    text += 'type /help <section> for details. tab to autocomplete.';
     core.appendOutput(`<pre>${escapeHtml(text)}</pre>`, 'info');
   }
 
@@ -206,7 +212,7 @@
       `rain: ${root.rain.settings().enabled ? 'on' : 'off'}`,
       `facts: ${root.facts.mode()}`,
       `tasks: ${stats.active} active`,
-      `games: chicken, snake, pacman, mario, tetris`,
+      `games: chicken, snake, pacman, tetris`,
     ].join('\n');
     core.appendOutput(`<pre>${escapeHtml(`${logo}\n\n${info}`)}</pre>`, 'info');
   }
@@ -214,7 +220,7 @@
   function launchGame(words) {
     const game = words[1] || 'chicken';
     const option = words[2] || 'medium';
-    const allowed = ['chicken', 'snake', 'pacman', 'mario', 'tetris'];
+    const allowed = ['chicken', 'snake', 'pacman', 'tetris'];
     if (!allowed.includes(game)) return core.appendOutput(`unknown game: ${escapeHtml(game)}. available: ${allowed.join(', ')}`, 'error');
     core.appendOutput(`launching ${escapeHtml(game)}${game === 'chicken' ? ` ${escapeHtml(option)}` : ''}...`, 'success');
     setTimeout(() => {
@@ -248,6 +254,11 @@
     if (base === 'todo') return root.todo.handle(words, commandLine);
     if (base === 'pomodoro') return root.todo.handlePomodoro(words);
     if (base === 'game') return launchGame(words);
+    if (base === 'blur') return handleBlur(words);
+    if (base === 'reset') return handleReset();
+    if (lowerLine === 'rm -rf * --force' || lowerLine === 'rm -rf *--force') return nukeEverything();
+    if (base === 'sudo' && words.length === 1) return easterSudo();
+    if (base === 'void') return easterVoid();
 
     if (base === 'yt' && originalWords.length > 1) {
       const q = commandLine.slice(3).trim();
@@ -276,9 +287,127 @@
     core.appendOutput(`command not found: /${escapeHtml(lowerLine)}`, 'error');
   }
 
+  let pendingReset = false;
+
+  function handleBlur(words) {
+    const blurTargets = {
+      notes: document.getElementById('stickyPanel'),
+      todo: document.getElementById('todoPanel'),
+      terminal: document.getElementById('output'),
+      facts: document.getElementById('factBar'),
+    };
+    const sub = words[1];
+    const action = words[2];
+
+    if (!sub) {
+      const allBlurred = Object.values(blurTargets).every(el => el && el.classList.contains('blurred'));
+      Object.values(blurTargets).forEach(el => { if (el) el.classList.toggle('blurred', !allBlurred); });
+      saveBlurState(blurTargets);
+      core.appendOutput(allBlurred ? 'blur disabled.' : 'blur enabled.', 'success');
+      return;
+    }
+    if (sub === 'all' && action === 'off') {
+      Object.values(blurTargets).forEach(el => { if (el) el.classList.remove('blurred'); });
+      saveBlurState(blurTargets);
+      core.appendOutput('all blur disabled.', 'success');
+      return;
+    }
+    if (blurTargets[sub]) {
+      const on = action !== 'off';
+      blurTargets[sub].classList.toggle('blurred', on);
+      saveBlurState(blurTargets);
+      core.appendOutput(`${sub} blur ${on ? 'enabled' : 'disabled'}.`, 'success');
+      return;
+    }
+    core.appendOutput('usage: /blur [notes|todo|terminal|facts] [on|off]', 'error');
+  }
+
+  function saveBlurState(targets) {
+    const state = {};
+    Object.entries(targets).forEach(([key, el]) => {
+      state[key] = el ? el.classList.contains('blurred') : false;
+    });
+    storage.setJson(storage.keys.blurState, state);
+  }
+
+  function restoreBlurState() {
+    const state = storage.getJson(storage.keys.blurState, {});
+    const targets = {
+      notes: document.getElementById('stickyPanel'),
+      todo: document.getElementById('todoPanel'),
+      terminal: document.getElementById('output'),
+      facts: document.getElementById('factBar'),
+    };
+    Object.entries(state).forEach(([key, blurred]) => {
+      if (targets[key] && blurred) targets[key].classList.add('blurred');
+    });
+  }
+
+  function handleReset() {
+    pendingReset = true;
+    core.appendOutput('⚠ this will erase all data. type Y to confirm, N to cancel.', 'error');
+  }
+
+  function processResetConfirm(input) {
+    pendingReset = false;
+    if (input.trim().toUpperCase() === 'Y') {
+      core.appendOutput('resetting all data...', 'error');
+      setTimeout(() => {
+        localStorage.clear();
+        location.reload();
+      }, 600);
+    } else {
+      core.appendOutput('reset cancelled.', 'info');
+    }
+  }
+
+  function nukeEverything() {
+    const lines = [
+      { text: '[▓▓▓▓▓▓▓▓▓▓] deleting system files...', delay: 0 },
+      { text: '[▓▓▓▓▓▓▓▓▓▓] purging user data...', delay: 500 },
+      { text: '[▓▓▓▓▓▓▓▓▓▓] removing traces...', delay: 1000 },
+      { text: '> system wiped. reloading...', delay: 1500 },
+    ];
+    lines.forEach(({ text, delay }) => {
+      setTimeout(() => core.appendOutput(escapeHtml(text), 'error'), delay);
+    });
+    setTimeout(() => {
+      localStorage.clear();
+      location.reload();
+    }, 2500);
+  }
+
+  function easterSudo() {
+    core.appendOutput(`[sudo] password for ${escapeHtml(root.config.get().user)}: ████████`, 'info');
+    setTimeout(() => {
+      core.appendOutput('Sorry, user is not in the sudoers file. This incident will be reported.', 'error');
+    }, 800);
+  }
+
+  function easterVoid() {
+    const overlay = document.createElement('div');
+    overlay.className = 'void-overlay';
+    const text = document.createElement('div');
+    text.className = 'void-text';
+    text.textContent = 'you stared into the void. the void stared back.';
+    overlay.appendChild(text);
+    document.body.appendChild(overlay);
+    setTimeout(() => {
+      overlay.remove();
+      core.appendOutput('...', 'info');
+    }, 3500);
+  }
+
   function handle(raw) {
     const command = raw.trim();
     if (!command) return;
+
+    if (pendingReset) {
+      core.echoCommand(command);
+      processResetConfirm(command);
+      return;
+    }
+
     core.saveHistory(command);
     core.echoCommand(command);
 
@@ -320,6 +449,7 @@
 
   function init() {
     root.core.dom.cmdInput.focus();
+    restoreBlurState();
   }
 
   root.shortcuts = { all: allShortcuts };

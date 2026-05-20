@@ -100,6 +100,61 @@
     root.todo.init();
     root.commands.init();
     bindInput();
+
+    const config = root.config.get();
+    if (config.startupAnim !== false) {
+      runStartupAnimation();
+    }
+  }
+
+  function runStartupAnimation() {
+    const termWindow = document.querySelector('.terminal-window');
+    const output = root.core.dom.output;
+    if (termWindow) termWindow.classList.add('startup-flicker');
+
+    const bootLines = [
+      { text: 'BIOS v3.7.1 ................... OK', delay: 80 },
+      { text: 'Memory check .................. 640K OK', delay: 180 },
+      { text: 'Loading kernel modules ........ done', delay: 300 },
+      { text: 'Mounting /dev/brain ........... OK', delay: 420 },
+      { text: 'Initializing display server ... OK', delay: 520 },
+    ];
+
+    bootLines.forEach(({ text, delay }) => {
+      setTimeout(() => {
+        root.core.appendOutput(root.utils.escapeHtml(text), 'boot-line');
+      }, delay);
+    });
+
+    // Loading bar animation
+    const barDelay = 650;
+    const barSteps = 20;
+    const barInterval = 40;
+    let barEl = null;
+    setTimeout(() => {
+      barEl = document.createElement('div');
+      barEl.className = 'out-line boot-bar';
+      output.appendChild(barEl);
+      let step = 0;
+      const barTimer = setInterval(() => {
+        step++;
+        const filled = '█'.repeat(step);
+        const empty = '░'.repeat(barSteps - step);
+        const pct = Math.round((step / barSteps) * 100);
+        barEl.textContent = `[${filled}${empty}] ${pct}%`;
+        if (step >= barSteps) {
+          clearInterval(barTimer);
+          setTimeout(() => {
+            root.core.appendOutput('Starting terminal service ... ready', 'boot-line');
+            setTimeout(() => {
+              output.innerHTML = '';
+              if (termWindow) termWindow.classList.remove('startup-flicker');
+              root.core.appendOutput(`welcome back, ${root.utils.escapeHtml(root.config.get().user)}. type /help or ? for commands.`, 'success');
+            }, 400);
+          }, 100);
+        }
+      }, barInterval);
+    }, barDelay);
   }
 
   boot();

@@ -6,6 +6,7 @@
     host: 'tabos',
     distro: 'tabos',
     accent: '#39c5bb',
+    startupAnim: true,
   };
 
   const DEFAULT_RAIN = {
@@ -38,6 +39,8 @@
     factCache: 'cachedFacts',
     pomodoro: 'pomodoro',
     leaderboard: 'chickenLeaderboard',
+    blurState: 'blurState',
+    notePanelPos: 'notePanelPos',
   };
 
   function safeJson(key, fallback) {
@@ -105,6 +108,8 @@
         `${keys.factMode}, ${keys.factCache}: fact mode and offline cache`,
         `${keys.pomodoro}: focus timer state`,
         `${keys.leaderboard}: chicken scores`,
+        `${keys.blurState}: blur/privacy state`,
+        `${keys.notePanelPos}: notes panel position`,
       ];
     },
   };
