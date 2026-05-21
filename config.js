@@ -106,11 +106,21 @@
       }
       return;
     }
+    if (sub === '3d') {
+      const isOn = config.parallax3d === true;
+      root.commands.confirm(`${isOn ? 'disable' : 'enable'} 3D parallax effect? (Y/N)`, () => {
+        config.parallax3d = !isOn;
+        save();
+        root.core.toggle3D(config.parallax3d);
+        appendOutput(`3D parallax: ${config.parallax3d ? 'on' : 'off'}`, 'success');
+      });
+      return;
+    }
     if (sub === 'storage') {
       appendOutput(`<pre>${escapeHtml(storage.describe().join('\n'))}</pre>`, 'info');
       return;
     }
-    appendOutput('config only edits essentials: user, host, distro, theme, and storage info.', 'error');
+    appendOutput('config only edits essentials: user, host, distro, theme, 3d, and storage info.', 'error');
   }
 
   root.config = {

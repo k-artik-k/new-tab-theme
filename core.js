@@ -220,6 +220,47 @@
     }, 150);
   }
 
+  /* ── 3D Parallax ── */
+  let parallax3dActive = false;
+  let parallaxRAF = null;
+  const P3D_TARGETS = ['.terminal-window', '.sticky-panel', '.todo-panel', '.pomodoro-standalone', '.top-bar'];
+
+  function toggle3D(enabled) {
+    parallax3dActive = enabled;
+    if (enabled) {
+      document.body.classList.add('parallax-3d');
+      P3D_TARGETS.forEach(sel => {
+        const el = document.querySelector(sel);
+        if (el) el.classList.add('p3d-target');
+      });
+      document.addEventListener('mousemove', onParallaxMove);
+    } else {
+      document.body.classList.remove('parallax-3d');
+      document.removeEventListener('mousemove', onParallaxMove);
+      document.querySelectorAll('.p3d-target').forEach(el => {
+        el.style.transform = '';
+        el.classList.remove('p3d-target');
+      });
+    }
+  }
+
+  function onParallaxMove(e) {
+    if (parallaxRAF) return;
+    parallaxRAF = requestAnimationFrame(() => {
+      const cx = window.innerWidth / 2;
+      const cy = window.innerHeight / 2;
+      const dx = (e.clientX - cx) / cx;
+      const dy = (e.clientY - cy) / cy;
+      document.querySelectorAll('.p3d-target').forEach((el, i) => {
+        const depth = 1 + i * 0.3;
+        const tx = dx * 6 * depth;
+        const ty = dy * 4 * depth;
+        el.style.transform = `perspective(800px) translate3d(${tx}px, ${ty}px, ${3 * depth}px) rotateX(${-dy * 1.5}deg) rotateY(${dx * 1.5}deg)`;
+      });
+      parallaxRAF = null;
+    });
+  }
+
   root.core = {
     dom,
     state,
@@ -231,6 +272,7 @@
     updateUptime,
     renderCalendar,
     routeTo,
+    toggle3D,
   };
 
   root.utils = {

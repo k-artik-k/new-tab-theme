@@ -946,9 +946,9 @@ body {
   border: 1px solid var(--border);
   border-left: 3px solid var(--accent);
   border-radius: 4px;
-  padding: 10px 12px;
-  font-size: 13px;
-  line-height: 1.6;
+  padding: 6px 8px;
+  font-size: 11px;
+  line-height: 1.35;
   cursor: pointer;
   transition: 0.2s;
 }
@@ -961,8 +961,8 @@ body {
 .note-card h2,
 .note-card h3 {
   color: var(--yellow);
-  font-size: 14px;
-  margin: 4px 0;
+  font-size: 12px;
+  margin: 2px 0;
 }
 
 .note-card strong {
@@ -1188,23 +1188,172 @@ body.alt-reveal .blurred {
   font-size: 11px;
 }
 
-/* Draggable sticky panel */
-.sticky-panel.draggable {
-  cursor: default;
+/* Floating individual notes */
+.floating-note {
+  position: fixed;
+  width: 200px;
+  max-height: 200px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  box-shadow: 0 2px 14px rgba(0,0,0,0.35);
+  z-index: 5;
+  overflow: hidden;
+  transition: box-shadow 0.2s;
 }
 
-.sticky-header.drag-handle {
+.floating-note:hover {
+  box-shadow: 0 4px 20px rgba(0,0,0,0.45);
+}
+
+.floating-note.dragging {
+  opacity: 0.85;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+  z-index: 100;
+}
+
+.fn-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 3px 8px;
+  background: var(--bg3);
   cursor: grab;
+  font-size: 9px;
+  color: var(--fg2);
+  border-bottom: 1px solid var(--border);
   user-select: none;
 }
 
-.sticky-header.drag-handle:active {
+.fn-header:active {
   cursor: grabbing;
 }
 
-.sticky-panel.dragging {
-  opacity: 0.85;
-  z-index: 100;
+.fn-title {
+  opacity: 0.7;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fn-edit {
+  cursor: pointer;
+  opacity: 0.4;
+  font-size: 11px;
+  transition: 0.15s;
+}
+
+.fn-edit:hover {
+  opacity: 1;
+  color: var(--accent);
+}
+
+.fn-body {
+  padding: 6px 8px;
+  font-size: 11px;
+  line-height: 1.35;
+  overflow-y: auto;
+  max-height: 160px;
+  color: var(--fg);
+}
+
+.fn-body h1, .fn-body h2, .fn-body h3 {
+  color: var(--yellow);
+  font-size: 12px;
+  margin: 2px 0;
+}
+
+.fn-body strong { color: var(--green); }
+.fn-body em { color: var(--magenta); }
+.fn-body code {
+  background: var(--bg3);
+  padding: 1px 3px;
+  border-radius: 2px;
+  color: var(--cyan);
+  font-size: 10px;
+}
+
+.fn-body pre {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 5px 7px;
+  font-size: 10px;
+  overflow-x: auto;
+  margin: 3px 0;
+  color: var(--cyan);
+}
+
+.fn-body a { color: var(--blue); }
+
+.fn-body ul, .fn-body ol {
+  padding-left: 14px;
+  margin: 1px 0;
+}
+
+.fn-body blockquote {
+  border-left: 2px solid var(--accent);
+  padding-left: 8px;
+  margin: 3px 0;
+  color: var(--fg2);
+  font-size: 10px;
+}
+
+.fn-body table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 3px 0;
+  font-size: 10px;
+}
+
+.fn-body th, .fn-body td {
+  border: 1px solid var(--border);
+  padding: 2px 5px;
+}
+
+.fn-body th {
+  background: var(--bg3);
+  color: var(--accent);
+}
+
+/* Note directory in panel */
+.note-dir-item {
+  padding: 3px 6px;
+  font-size: 10px;
+  color: var(--fg2);
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  transition: 0.15s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.note-dir-item:hover {
+  color: var(--accent);
+  background: var(--bg3);
+}
+
+.note-dir-dot {
+  color: var(--accent);
+  margin-right: 5px;
+  font-size: 6px;
+  vertical-align: middle;
+}
+
+@keyframes noteFlash {
+  0%, 100% { box-shadow: 0 2px 14px rgba(0,0,0,0.35); }
+  50% { box-shadow: 0 0 24px var(--accent); }
+}
+
+.note-flash {
+  animation: noteFlash 0.5s ease;
+}
+
+/* 3D Parallax */
+.p3d-target {
+  transition: transform 0.12s ease-out;
+  will-change: transform;
 }
 
 /* Advanced note markdown */

@@ -35,8 +35,8 @@
     ['help <command>', 'show help for one command family'],
     ['clear', 'clear terminal output'],
     ['time', 'print current time'],
+    ['help md', 'markdown notation reference'],
     ['history', 'show command history'],
-    ['neofetch', 'show distro summary'],
     ['uname', 'show fake kernel line'],
     ['config', 'show essential config'],
     ['config user <name>', 'set prompt user'],
@@ -44,8 +44,9 @@
     ['config distro <name>', 'set distro label'],
     ['config theme <color|#hex>', 'set accent theme'],
     ['config theme list', 'show theme presets'],
+    ['config 3d', 'toggle 3D parallax effect'],
     ['config storage', 'show localStorage keys'],
-    ['shortcut list', 'list custom shortcuts'],
+    ['shortcut list', 'list all shortcuts'],
     ['shortcut add <name> <url> [description]', 'add shortcut'],
     ['shortcut delete <name>', 'delete custom or disable built-in shortcut'],
     ['shortcut restore <name>', 'restore disabled built-in shortcut'],
@@ -85,7 +86,6 @@
     ['game chicken hard', 'Chicken Defender hard survival'],
     ['game snake', 'play Snake'],
     ['game pacman', 'play maze game'],
-
     ['game tetris', 'play Tetris'],
     ['yt <query>', 'YouTube search'],
     ['gpt <query>', 'ChatGPT prompt'],
@@ -111,10 +111,12 @@
   }
 
   function listShortcuts() {
-    const custom = Object.keys(userShortcuts);
-    if (!custom.length) core.appendOutput('no custom shortcuts yet.', 'info');
-    custom.forEach(key => core.appendOutput(`/${escapeHtml(key)} -> ${escapeHtml(userShortcuts[key].url)}`, 'info'));
-    core.appendOutput(`${Object.keys(allShortcuts()).length} active shortcuts, ${disabledShortcuts.length} built-in disabled.`, 'info');
+    const all = allShortcuts();
+    const entries = Object.entries(all);
+    if (!entries.length) return core.appendOutput('no shortcuts.', 'info');
+    const lines = entries.map(([k, v]) => `/${k}  →  ${v.desc}`).join('\n');
+    core.appendOutput(`<pre>${escapeHtml(lines)}</pre>`, 'info');
+    if (disabledShortcuts.length) core.appendOutput(`${disabledShortcuts.length} built-in disabled.`, 'info');
   }
 
   function handleShortcut(words, original) {
@@ -167,9 +169,32 @@
   }
 
   function showHelp(topic) {
+    if (topic === 'md' || topic === 'markdown') {
+      const md = [
+        'Markdown Reference for Notes',
+        '────────────────────────────',
+        '# Heading 1       ## Heading 2       ### Heading 3',
+        '**bold**           *italic*            `inline code`',
+        '- list item        - [ ] unchecked     - [x] checked',
+        '> blockquote       ---  horizontal rule',
+        '```                code block          ```',
+        '[text](url)        clickable link',
+        '',
+        'Tables:',
+        '| col1 | col2 |    (header row)',
+        '| ---- | ---- |    (separator)',
+        '| val  | val  |    (data rows)',
+        '',
+        'Editor: Ctrl+B bold, Ctrl+I italic, Ctrl+K link, Ctrl+` code',
+        'Double-click a note to edit. Drag header to reposition.',
+      ].join('\n');
+      core.appendOutput(`<pre>${escapeHtml(md)}</pre>`, 'info');
+      return;
+    }
+
     const groups = {
       search: ['yt <query>', 'gpt <query>', 'rd <subreddit>', 'g <query>', '<bare text>'],
-      config: ['config', 'config user|host|distro <name>', 'config theme <color|#hex>', 'config startup on|off', 'config storage'],
+      config: ['config', 'config user|host|distro <name>', 'config theme <color|#hex>', 'config 3d', 'config startup on|off', 'config storage'],
       shortcuts: ['shortcut list|add|delete|restore'],
       rain: ['rain on|off', 'rain preset mist|calm|storm', 'rain intensity|wind|sound|thunder'],
       facts: ['fact', 'fact mode science|tech|weird|context|mixed'],
@@ -177,7 +202,7 @@
       timer: ['pomodoro start|pause|stop|status'],
       games: ['game chicken easy|medium|hard', 'game snake', 'game pacman', 'game tetris'],
       privacy: ['blur', 'blur notes|todo|terminal|facts on|off'],
-      system: ['reset', 'clear', 'history', 'neofetch', 'uname'],
+      system: ['reset', 'clear', 'history', 'uname', 'help md'],
     };
 
     if (topic && groups[topic]) {
@@ -199,22 +224,6 @@
     if (!core.state.history.length) return core.appendOutput('no history yet.', 'info');
     const lines = core.state.history.slice(0, 20).map((cmd, i) => `${i + 1}. ${cmd}`).join('\n');
     core.appendOutput(`<pre>${escapeHtml(lines)}</pre>`, 'info');
-  }
-
-  function showNeofetch() {
-    const config = root.config.get();
-    const stats = root.todo.stats();
-    const logo = ['      /\\', '     /  \\', '    /____\\', '   /      \\', '  /__tab___\\'].join('\n');
-    const info = [
-      `${config.user}@${config.host}`,
-      `distro: ${config.distro}`,
-      `theme: ${config.accent}`,
-      `rain: ${root.rain.settings().enabled ? 'on' : 'off'}`,
-      `facts: ${root.facts.mode()}`,
-      `tasks: ${stats.active} active`,
-      `games: chicken, snake, pacman, tetris`,
-    ].join('\n');
-    core.appendOutput(`<pre>${escapeHtml(`${logo}\n\n${info}`)}</pre>`, 'info');
   }
 
   function launchGame(words) {
@@ -241,7 +250,6 @@
     }
     if (base === 'time') return core.appendOutput(escapeHtml(core.dom.clock.textContent), 'info');
     if (base === 'history') return showHistory();
-    if (base === 'neofetch') return showNeofetch();
     if (base === 'uname') return core.appendOutput(`${escapeHtml(root.config.get().distro)} newtab 2.0.0 browser-js x86_64`, 'info');
     if (lowerLine === 'sudo make me a distro') return core.appendOutput('building from vibes... done. package name: tabos-minimal', 'success');
     if (lowerLine === 'kernel panic') return core.appendOutput('<pre>kernel panic: attempted to boot without coffee\nrecovered: staying in userspace</pre>', 'error');
@@ -287,7 +295,12 @@
     core.appendOutput(`command not found: /${escapeHtml(lowerLine)}`, 'error');
   }
 
-  let pendingReset = false;
+  let pendingConfirm = null;
+
+  function confirm(message, callback) {
+    pendingConfirm = { callback };
+    core.appendOutput(message, 'info');
+  }
 
   function handleBlur(words) {
     const blurTargets = {
@@ -344,21 +357,13 @@
   }
 
   function handleReset() {
-    pendingReset = true;
-    core.appendOutput('⚠ this will erase all data. type Y to confirm, N to cancel.', 'error');
-  }
-
-  function processResetConfirm(input) {
-    pendingReset = false;
-    if (input.trim().toUpperCase() === 'Y') {
+    confirm('⚠ this will erase all data. type Y to confirm, N to cancel.', () => {
       core.appendOutput('resetting all data...', 'error');
       setTimeout(() => {
         localStorage.clear();
         location.reload();
       }, 600);
-    } else {
-      core.appendOutput('reset cancelled.', 'info');
-    }
+    });
   }
 
   function nukeEverything() {
@@ -402,9 +407,11 @@
     const command = raw.trim();
     if (!command) return;
 
-    if (pendingReset) {
+    if (pendingConfirm) {
       core.echoCommand(command);
-      processResetConfirm(command);
+      if (command.trim().toUpperCase() === 'Y') pendingConfirm.callback();
+      else core.appendOutput('cancelled.', 'info');
+      pendingConfirm = null;
       return;
     }
 
@@ -458,5 +465,6 @@
     handle,
     completions,
     showHelp,
+    confirm,
   };
 })();

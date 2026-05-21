@@ -105,6 +105,9 @@
     if (config.startupAnim !== false) {
       runStartupAnimation();
     }
+    if (config.parallax3d) {
+      root.core.toggle3D(true);
+    }
   }
 
   function runStartupAnimation() {

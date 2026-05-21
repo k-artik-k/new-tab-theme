@@ -103,7 +103,6 @@
       chicken: ['CHICKEN', 'DEFENDER', 'WASD / arrows move, SPACE / right-click shoot', 'choose /game chicken easy|medium|hard'],
       snake: ['SNAKE', 'CLASSIC', 'arrows / WASD to turn', 'eat blocks, avoid walls and yourself'],
       pacman: ['PACMAN', 'MAZE RUN', 'arrows / WASD to move', 'pellets, power pills, ghosts, tunnels'],
-      mario: ['MARIO', 'PLATFORMER', 'A/D move, SPACE jump', 'tiles, coins, patrols, flag'],
       tetris: ['TETRIS', 'BLOCK STACK', 'arrows move, UP rotate, SPACE drop', 'clear lines before the stack reaches top'],
     };
     const data = labels[gameMode] || labels.chicken;
