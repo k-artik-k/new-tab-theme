@@ -12,11 +12,10 @@
     notes = [];
     storage.setJson(storage.keys.notes, notes);
   }
+
   let editingIndex = null;
   let previewActive = false;
   let previewDebounce = null;
-  let globalZIndex = 10;
-  let dragState = null;
 
   const els = {
     panel: document.getElementById('stickyPanel'),
@@ -35,23 +34,18 @@
     storage.setJson(storage.keys.notes, notes);
   }
 
-  function getPositions() {
-    return storage.getJson(storage.keys.notePanelPos, {});
-  }
-  function savePositions(positions) {
-    storage.setJson(storage.keys.notePanelPos, positions);
+  function notesShouldBlur() {
+    return !!storage.getJson(storage.keys.blurState, {}).notes;
   }
 
-  /* ── Compact Markdown Parser ── */
+  function setBlurred(on) {
+    els.panel.classList.toggle('blurred', on);
+  }
+
   function renderMarkdown(md) {
     let html = escapeHtml(md);
 
-    // Code blocks
-    html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
-      return `<pre><code>${code.trim()}</code></pre>`;
-    });
-
-    // Tables
+    html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => `<pre><code>${code.trim()}</code></pre>`);
     html = html.replace(/^(\|.+\|)\n(\|[\s\-:|]+\|)\n((?:\|.+\|\n?)+)/gm, (_, header, sep, body) => {
       const thCells = header.split('|').filter(c => c.trim()).map(c => `<th>${c.trim()}</th>`).join('');
       const rows = body.trim().split('\n').map(row => {
@@ -83,91 +77,23 @@
 
   function truncate(text, len) {
     const first = text.split('\n')[0].replace(/^#+\s*/, '').replace(/\*\*/g, '');
-    return first.length > len ? first.slice(0, len) + '\u2026' : first;
-  }
-
-  function defaultPosition(index) {
-    return {
-      x: 20 + (index % 4) * 210,
-      y: Math.max(80, window.innerHeight - 280 - Math.floor(index / 4) * 160),
-    };
-  }
-
-  /* ── Panel directory (mini list) ── */
-  function renderDirectory() {
-    els.container.innerHTML = notes.map((note, i) =>
-      `<div class="note-dir-item" data-index="${i}"><span class="note-dir-dot">\u25cf</span>${escapeHtml(truncate(note, 24))}</div>`
-    ).join('');
-    els.container.querySelectorAll('.note-dir-item').forEach(item => {
-      item.addEventListener('click', () => focusNote(Number(item.dataset.index)));
-    });
-  }
-
-  function focusNote(index) {
-    const el = document.querySelector(`.floating-note[data-index="${index}"]`);
-    if (el) {
-      globalZIndex++;
-      el.style.zIndex = globalZIndex;
-      el.classList.add('note-flash');
-      setTimeout(() => el.classList.remove('note-flash'), 500);
-    }
-  }
-
-  /* ── Floating Notes ── */
-  function renderFloating() {
-    document.querySelectorAll('.floating-note').forEach(el => el.remove());
-    const positions = getPositions();
-
-    notes.forEach((note, i) => {
-      const card = document.createElement('div');
-      card.className = 'floating-note';
-      card.dataset.index = i;
-      card.innerHTML =
-        `<div class="fn-header">` +
-          `<span class="fn-title">${escapeHtml(truncate(note, 18))}</span>` +
-          `<span class="fn-edit" data-index="${i}" title="edit">\u270e</span>` +
-        `</div>` +
-        `<div class="fn-body">${renderMarkdown(note)}</div>`;
-
-      const pos = positions[i] || defaultPosition(i);
-      card.style.left = `${pos.x}px`;
-      card.style.top = `${pos.y}px`;
-
-      // Double-click body to edit
-      card.querySelector('.fn-body').addEventListener('dblclick', () => open(i));
-      card.querySelector('.fn-edit').addEventListener('click', () => open(i));
-
-      // Drag via header
-      card.querySelector('.fn-header').addEventListener('mousedown', e => {
-        if (e.target.classList.contains('fn-edit')) return;
-        dragState = {
-          card,
-          index: i,
-          offsetX: e.clientX - card.getBoundingClientRect().left,
-          offsetY: e.clientY - card.getBoundingClientRect().top,
-        };
-        card.classList.add('dragging');
-        globalZIndex++;
-        card.style.zIndex = globalZIndex;
-        e.preventDefault();
-      });
-
-      // Click brings to front
-      card.addEventListener('mousedown', () => {
-        globalZIndex++;
-        card.style.zIndex = globalZIndex;
-      });
-
-      document.body.appendChild(card);
-    });
+    return first.length > len ? `${first.slice(0, len)}...` : first;
   }
 
   function render() {
-    renderDirectory();
-    renderFloating();
+    document.querySelectorAll('.floating-note').forEach(el => el.remove());
+    els.container.innerHTML = notes.map((note, i) => (
+      `<article class="note-card" data-index="${i}">` +
+        `<div class="note-card-title">${escapeHtml(truncate(note, 30))}</div>` +
+        `<div class="note-card-body">${renderMarkdown(note)}</div>` +
+      `</article>`
+    )).join('');
+    els.container.querySelectorAll('.note-card').forEach(card => {
+      card.addEventListener('click', () => open(Number(card.dataset.index)));
+    });
+    setBlurred(notesShouldBlur());
   }
 
-  /* ── Modal ── */
   function open(index) {
     editingIndex = index;
     els.editor.value = index === null ? '' : notes[index];
@@ -206,87 +132,6 @@
     els.preview.innerHTML = renderMarkdown(els.editor.value);
   }
 
-  /* ── Init ── */
-  function init() {
-    render();
-
-    // Global drag listeners (single pair for all notes)
-    document.addEventListener('mousemove', e => {
-      if (!dragState) return;
-      dragState.card.style.left = `${e.clientX - dragState.offsetX}px`;
-      dragState.card.style.top = `${e.clientY - dragState.offsetY}px`;
-    });
-    document.addEventListener('mouseup', () => {
-      if (!dragState) return;
-      dragState.card.classList.remove('dragging');
-      const rect = dragState.card.getBoundingClientRect();
-      const positions = getPositions();
-      positions[dragState.index] = { x: Math.round(rect.left), y: Math.round(rect.top) };
-      savePositions(positions);
-      dragState = null;
-    });
-
-    els.add.addEventListener('click', () => open(null));
-
-    els.save.addEventListener('click', () => {
-      const text = els.editor.value.trim();
-      if (!text) return;
-      if (editingIndex === null) notes.push(text);
-      else notes[editingIndex] = text;
-      save();
-      render();
-      close();
-    });
-
-    els.remove.addEventListener('click', () => {
-      if (editingIndex !== null) {
-        // Clean up saved position for deleted note
-        const positions = getPositions();
-        delete positions[editingIndex];
-        // Shift positions for notes after deleted one
-        const shifted = {};
-        Object.entries(positions).forEach(([k, v]) => {
-          const idx = Number(k);
-          if (idx > editingIndex) shifted[idx - 1] = v;
-          else shifted[idx] = v;
-        });
-        savePositions(shifted);
-        notes.splice(editingIndex, 1);
-        save();
-        render();
-      }
-      close();
-    });
-
-    els.close.addEventListener('click', close);
-    els.modal.addEventListener('click', e => {
-      if (e.target === els.modal) close();
-    });
-
-    // Preview toggle
-    if (els.togglePreview) {
-      els.togglePreview.addEventListener('click', togglePreviewMode);
-    }
-
-    // Live preview on editor input
-    if (els.editor) {
-      els.editor.addEventListener('input', () => {
-        clearTimeout(previewDebounce);
-        previewDebounce = setTimeout(updatePreview, 200);
-      });
-    }
-
-    // Keyboard shortcuts in editor
-    if (els.editor) {
-      els.editor.addEventListener('keydown', e => {
-        if (e.ctrlKey && e.key === 'b') { e.preventDefault(); wrapSelection('**', '**'); }
-        if (e.ctrlKey && e.key === 'i') { e.preventDefault(); wrapSelection('*', '*'); }
-        if (e.ctrlKey && e.key === 'k') { e.preventDefault(); wrapSelection('[', '](url)'); }
-        if (e.ctrlKey && e.key === '`') { e.preventDefault(); wrapSelection('`', '`'); }
-      });
-    }
-  }
-
   function wrapSelection(before, after) {
     const textarea = els.editor;
     const start = textarea.selectionStart;
@@ -301,8 +146,49 @@
     previewDebounce = setTimeout(updatePreview, 200);
   }
 
+  function init() {
+    render();
+
+    els.add.addEventListener('click', () => open(null));
+    els.save.addEventListener('click', () => {
+      const text = els.editor.value.trim();
+      if (!text) return;
+      if (editingIndex === null) notes.push(text);
+      else notes[editingIndex] = text;
+      save();
+      render();
+      close();
+    });
+    els.remove.addEventListener('click', () => {
+      if (editingIndex !== null) {
+        notes.splice(editingIndex, 1);
+        save();
+        render();
+      }
+      close();
+    });
+    els.close.addEventListener('click', close);
+    els.modal.addEventListener('click', e => {
+      if (e.target === els.modal) close();
+    });
+    if (els.togglePreview) els.togglePreview.addEventListener('click', togglePreviewMode);
+    if (els.editor) {
+      els.editor.addEventListener('input', () => {
+        clearTimeout(previewDebounce);
+        previewDebounce = setTimeout(updatePreview, 200);
+      });
+      els.editor.addEventListener('keydown', e => {
+        if (e.ctrlKey && e.key === 'b') { e.preventDefault(); wrapSelection('**', '**'); }
+        if (e.ctrlKey && e.key === 'i') { e.preventDefault(); wrapSelection('*', '*'); }
+        if (e.ctrlKey && e.key === 'k') { e.preventDefault(); wrapSelection('[', '](url)'); }
+        if (e.ctrlKey && e.key === '`') { e.preventDefault(); wrapSelection('`', '`'); }
+      });
+    }
+  }
+
   root.notes = {
     init,
     all: () => notes.slice(),
+    setBlurred,
   };
 })();
