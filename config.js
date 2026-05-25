@@ -1,0 +1,185 @@
+(function () {
+  const root = window.TabOS = window.TabOS || {};
+  const storage = root.storage;
+  const { escapeHtml } = root.utils;
+  const { appendOutput } = root.core;
+
+  const THEME_COLORS = {
+    cyan: '#39c5bb',
+    red: '#f07178',
+    green: '#7fd962',
+    blue: '#59c2ff',
+    magenta: '#d2a6ff',
+    yellow: '#e6b450',
+    orange: '#ff8f40',
+    pink: '#ff79c6',
+    purple: '#bd93f9',
+    white: '#ffffff',
+  };
+
+  const LAYOUT_THEMES = {
+    terminal: 'current terminal layout',
+    neo: 'neo brutalism layout',
+    liquid: 'liquid glass layout',
+    aero: 'Windows 7 aero layout',
+  };
+
+  let config = storage.loadConfig();
+
+  function normalizeConfig() {
+    if (!LAYOUT_THEMES[config.layoutTheme]) config.layoutTheme = storage.defaults.config.layoutTheme;
+    if (!/^#[0-9a-f]{3,8}$/i.test(config.accent)) config.accent = storage.defaults.config.accent;
+  }
+
+  function save() {
+    normalizeConfig();
+    storage.saveConfig(config);
+    apply();
+  }
+
+  function setAccent(value) {
+    const color = THEME_COLORS[value] || value;
+    if (!/^#[0-9a-f]{3,8}$/i.test(color)) return false;
+    config.accent = color;
+    save();
+    return true;
+  }
+
+  function setLayoutTheme(value) {
+    const theme = String(value || '').toLowerCase();
+    if (!LAYOUT_THEMES[theme]) return false;
+    config.layoutTheme = theme;
+    save();
+    return true;
+  }
+
+  function apply() {
+    normalizeConfig();
+    document.documentElement.style.setProperty('--accent', config.accent);
+    document.body.classList.remove(...Object.keys(LAYOUT_THEMES).map(theme => `theme-${theme}`));
+    document.body.classList.add(`theme-${config.layoutTheme}`);
+    document.body.dataset.theme = config.layoutTheme;
+
+    const topBarName = document.getElementById('topBarName');
+    const terminalTitle = document.getElementById('terminalTitle');
+    const promptUser = document.getElementById('promptUser');
+    const promptHost = document.getElementById('promptHost');
+    if (topBarName) topBarName.textContent = `${config.user}@${config.host}`;
+    if (terminalTitle) terminalTitle.textContent = `${config.user}@${config.host}:~`;
+    if (promptUser) promptUser.textContent = config.user;
+    if (promptHost) promptHost.textContent = config.host;
+    if (root.layout && root.layout.applyTheme) root.layout.applyTheme();
+  }
+
+  function show() {
+    const taskStats = root.todo ? root.todo.stats() : { active: 0, total: 0 };
+    appendOutput(`user: <span style="color:var(--accent)">${escapeHtml(config.user)}</span>`, 'info');
+    appendOutput(`host: <span style="color:var(--accent)">${escapeHtml(config.host)}</span>`, 'info');
+    appendOutput(`distro: <span style="color:var(--accent)">${escapeHtml(config.distro)}</span>`, 'info');
+    appendOutput(`theme: ${escapeHtml(config.layoutTheme)}`, 'info');
+    appendOutput(`accent: <span style="color:var(--accent)">#</span> ${escapeHtml(config.accent)}`, 'info');
+    appendOutput(`layout edit: ${config.layoutEdit === true ? 'on' : 'off'}`, 'info');
+    appendOutput(`shortcuts: ${root.shortcuts ? Object.keys(root.shortcuts.all()).length : 0} active`, 'info');
+    appendOutput(`rain: ${root.rain ? escapeHtml(root.rain.describe()) : 'not started'}`, 'info');
+    appendOutput(`facts: ${root.facts ? escapeHtml(root.facts.mode()) : 'mixed'}`, 'info');
+    appendOutput(`tasks: ${taskStats.active} active, ${taskStats.total} total`, 'info');
+    appendOutput('use /theme <terminal|neo|liquid|aero> or /config accent <color>', 'info');
+  }
+
+  function handle(words, original) {
+    const sub = words[1];
+    if (!sub) {
+      show();
+      return;
+    }
+    if (sub === 'reset') {
+      config = { ...storage.defaults.config };
+      save();
+      appendOutput('config reset', 'success');
+      return;
+    }
+    if (['user', 'host', 'distro'].includes(sub)) {
+      const value = original.slice(original.toLowerCase().indexOf(sub) + sub.length).trim();
+      if (!value) {
+        appendOutput(`usage: /config ${sub} <value>`, 'error');
+        return;
+      }
+      config[sub] = value;
+      save();
+      appendOutput(`${sub}: ${escapeHtml(value)}`, 'success');
+      return;
+    }
+    if (sub === 'theme') {
+      const value = words[2];
+      if (!value || value === 'list') {
+        appendOutput(`current theme: ${escapeHtml(config.layoutTheme)}`, 'info');
+        appendOutput(`themes: ${Object.keys(LAYOUT_THEMES).join(', ')}`, 'info');
+        appendOutput('usage: /theme <name>', 'info');
+        return;
+      }
+      if (value === 'reset') {
+        setLayoutTheme(storage.defaults.config.layoutTheme);
+        appendOutput('theme reset', 'success');
+        return;
+      }
+      if (setLayoutTheme(value)) appendOutput(`theme: ${escapeHtml(config.layoutTheme)}`, 'success');
+      else appendOutput(`unknown theme: ${escapeHtml(value)}`, 'error');
+      return;
+    }
+    if (sub === 'accent') {
+      const value = words[2];
+      if (!value || value === 'list') {
+        appendOutput(`current accent: <span style="color:var(--accent)">#</span> ${escapeHtml(config.accent)}`, 'info');
+        appendOutput(`presets: ${Object.keys(THEME_COLORS).join(', ')}`, 'info');
+        appendOutput('usage: /config accent <preset|#hex>', 'info');
+        return;
+      }
+      if (value === 'reset') {
+        setAccent(storage.defaults.config.accent);
+        appendOutput('accent reset', 'success');
+        return;
+      }
+      if (setAccent(value)) appendOutput(`accent: <span style="color:${config.accent}">#</span> ${escapeHtml(config.accent)}`, 'success');
+      else appendOutput(`unknown accent: ${escapeHtml(value)}`, 'error');
+      return;
+    }
+    if (sub === 'startup') {
+      const val = words[2];
+      if (val === 'on' || val === 'off') {
+        config.startupAnim = val === 'on';
+        save();
+        appendOutput(`startup animation: ${val}`, 'success');
+      } else {
+        appendOutput(`startup animation: ${config.startupAnim !== false ? 'on' : 'off'}`, 'info');
+        appendOutput('usage: /config startup on|off', 'info');
+      }
+      return;
+    }
+    if (sub === '3d') {
+      const isOn = config.parallax3d === true;
+      root.commands.confirm(`${isOn ? 'disable' : 'enable'} 3D parallax effect? (Y/N)`, () => {
+        config.parallax3d = !isOn;
+        save();
+        root.core.toggle3D(config.parallax3d);
+        appendOutput(`3D parallax: ${config.parallax3d ? 'on' : 'off'}`, 'success');
+      });
+      return;
+    }
+    if (sub === 'storage') {
+      appendOutput(`<pre>${escapeHtml(storage.describe().join('\n'))}</pre>`, 'info');
+      return;
+    }
+    appendOutput('config edits identity, theme, accent, startup, 3d, and storage info.', 'error');
+  }
+
+  root.config = {
+    init: apply,
+    get: () => config,
+    colors: () => ({ ...THEME_COLORS }),
+    layouts: () => ({ ...LAYOUT_THEMES }),
+    setAccent,
+    setLayoutTheme,
+    apply,
+    handle,
+  };
+})();
