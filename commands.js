@@ -4,11 +4,18 @@
   const { escapeHtml, tryMath } = root.utils;
   const core = root.core;
 
+  function isTerminalTheme() {
+    return !root.config || !root.config.get || root.config.get().layoutTheme === 'terminal';
+  }
+
+  const HEAVY_COMMANDS = ['game', 'todo', 'pomodoro', 'reset'];
+
   const BUILTIN_SHORTCUTS = {
     yt: { url: 'https://youtube.com', desc: 'YouTube' },
     youtube: { url: 'https://youtube.com', desc: 'YouTube' },
     gpt: { url: 'https://chatgpt.com', desc: 'ChatGPT' },
     chatgpt: { url: 'https://chatgpt.com', desc: 'ChatGPT' },
+    claude: { url: 'https://claude.ai', desc: 'Claude AI' },
     gemini: { url: 'https://gemini.google.com', desc: 'Google Gemini' },
     github: { url: 'https://github.com', desc: 'GitHub' },
     gh: { url: 'https://github.com', desc: 'GitHub' },
@@ -31,42 +38,34 @@
   let disabledShortcuts = storage.getJson(storage.keys.disabledShortcuts, []);
 
   const catalog = [
-    ['help', 'small command list'],
-    ['theme <terminal|neo|liquid|aero>', 'switch layout'],
-    ['clear', 'clear terminal'],
+    ['help', 'commands'],
+    ['theme <name>', 'switch theme'],
+    ['clear', 'clear'],
     ['time', 'current time'],
     ['history', 'recent commands'],
-    ['layout reset', 'reset widget positions'],
-    ['layout edit on|off', 'move/resize alternate themes'],
-    ['widget list', 'visible widgets'],
-    ['widget toggle <name>', 'show/hide widget'],
     ['config', 'settings'],
-    ['config user <name>', 'set prompt user'],
-    ['config host <name>', 'set prompt host'],
-    ['config distro <name>', 'set distro label'],
-    ['config accent <color|#hex>', 'set accent color'],
+    ['config enable <widget>', 'show widget'],
+    ['config disable <widget>', 'hide widget'],
+    ['config accent <color>', 'accent color'],
+    ['widget list', 'widgets'],
+    ['widget toggle <name>', 'toggle widget'],
     ['shortcut list', 'shortcuts'],
-    ['shortcut add <name> <url> [description]', 'add shortcut'],
-    ['shortcut delete <name>', 'remove shortcut'],
-    ['rain on', 'rain on'],
-    ['rain off', 'rain off'],
-    ['rain preset mist|calm|storm', 'rain preset'],
+    ['shortcut add <name> <url>', 'add shortcut'],
+    ['rain on|off', 'rain'],
+    ['rain preset mist|calm|storm', 'preset'],
     ['fact', 'next fact'],
     ['todo list', 'tasks'],
     ['todo add <task>', 'add task'],
-    ['todo done <id>', 'finish task'],
-    ['todo delete <id>', 'delete task'],
-    ['pomodoro start <minutes>', 'start focus'],
-    ['pomodoro pause', 'pause focus'],
-    ['pomodoro stop', 'stop focus'],
-    ['game chicken|snake|pacman|tetris', 'play game'],
-    ['yt <query>', 'YouTube'],
+    ['game chicken|snake|pacman|tetris', 'play'],
+    ['cat [text]', 'create note'],
+    ['export', 'backup data'],
     ['gpt <prompt>', 'ChatGPT'],
-    ['rd <subreddit>', 'Reddit'],
-    ['g <query>', 'Google'],
-    ['blur', 'toggle blur'],
-    ['blur notes|todo|terminal|facts on|off', 'privacy blur'],
-    ['reset', 'reset data'],
+    ['claude <prompt>', 'Claude AI'],
+    ['yt <query>', 'YouTube'],
+    ['blur', 'privacy'],
+    ['layout reset', 'reset layout'],
+    ['pomodoro start|pause|stop', 'focus timer'],
+    ['reset', 'reset all data'],
   ];
 
   function allShortcuts() {
@@ -96,13 +95,13 @@
     const originalParts = original.split(/\s+/).filter(Boolean);
     if (sub === 'list' || sub === 'ls') {
       listShortcuts();
-      core.appendOutput('usage: /shortcut add <name> <url> [description], /shortcut delete <name>, /shortcut restore <name>', 'info');
+      core.appendOutput('usage: /shortcut add <name> <url> [desc], /shortcut delete <name>', 'info');
       return;
     }
     if (sub === 'add' || sub === 'set') {
       const name = originalParts[2] ? originalParts[2].toLowerCase().replace(/[^a-z0-9_-]/g, '') : '';
       const url = originalParts[3] || '';
-      if (!name || !url) return core.appendOutput('usage: /shortcut add <name> <url> [description]', 'error');
+      if (!name || !url) return core.appendOutput('usage: /shortcut add <name> <url> [desc]', 'error');
       const descIndex = original.indexOf(url) + url.length;
       const desc = original.slice(descIndex).trim() || name;
       const finalUrl = /^https?:\/\//i.test(url) ? url : `https://${url}`;
@@ -124,7 +123,7 @@
       if (BUILTIN_SHORTCUTS[name]) {
         if (!disabledShortcuts.includes(name)) disabledShortcuts.push(name);
         saveShortcuts();
-        core.appendOutput(`disabled built-in shortcut /${escapeHtml(name)}. restore with /shortcut restore ${escapeHtml(name)}`, 'success');
+        core.appendOutput(`disabled /${escapeHtml(name)}. restore with /shortcut restore ${escapeHtml(name)}`, 'success');
         return;
       }
       core.appendOutput(`shortcut not found: ${escapeHtml(name)}`, 'error');
@@ -143,31 +142,34 @@
   function showHelp(topic) {
     const compactHelp = {
       main: [
-        'theme terminal|neo|liquid|aero',
-        'g <query>',
-        'gpt <prompt>',
-        'yt <query>',
-        'todo list|add|done|delete',
-        'pomodoro start|pause|stop',
-        'widget list|toggle <name>',
-        'blur notes|todo|terminal|facts on|off',
-        'rain on|off',
-        'game chicken|snake|pacman|tetris',
-        'shortcut list|add|delete|restore',
-        'layout reset|edit on|off',
-        'config',
-        'clear',
+        'help / ?              commands',
+        'theme <name>          switch theme',
+        'config                settings',
+        'g: <query>            google search',
+        'gpt <prompt>          ChatGPT',
+        'claude <prompt>       Claude AI',
+        'yt <query>            YouTube',
+        'cat [text]            create note',
+        'todo                  tasks (terminal only)',
+        'game                  play (terminal only)',
+        'rain on|off           rain',
+        'blur                  privacy',
+        'widget list|toggle    widgets',
+        'shortcut list         links',
+        'export                backup to clipboard',
+        'clear                 clear',
       ],
-      theme: ['theme terminal', 'theme neo', 'theme liquid', 'theme aero', 'config accent <color|#hex>'],
-      todo: ['todo list', 'todo add <task> [!] [due:tomorrow] [50%]', 'todo done <id>', 'todo delete <id>', 'todo clear-done'],
-      rain: ['rain on|off', 'rain preset mist|calm|storm', 'rain intensity <0-100>', 'rain wind <dir> <0-100>'],
-      config: ['config user <name>', 'config host <name>', 'config distro <name>', 'config accent <color|#hex>', 'config startup on|off'],
+      theme: ['theme terminal|neo|win7', 'config accent <color|#hex>'],
+      todo: ['todo list', 'todo add <task> [!] [due:YYYY-MM-DD]', 'todo done <id>', 'todo delete <id>', 'todo clear-done'],
+      rain: ['rain on|off', 'rain preset mist|calm|storm', 'rain intensity <0-100>'],
+      config: ['config user|host <name>', 'config accent <color>', 'config enable|disable <widget>', 'config startup on|off'],
     };
     const key = topic && compactHelp[topic] ? topic : 'main';
-    const lines = compactHelp[key].map(x => `/${x}`).join('\n');
+    const lines = key === 'main'
+      ? compactHelp[key].join('\n')
+      : compactHelp[key].map(x => `/${x}`).join('\n');
     const suffix = key === 'main' ? '\n\n/help theme, /help todo, /help rain, /help config' : '';
     core.appendOutput(`<pre>${escapeHtml(lines + suffix)}</pre>`, 'info');
-    return;
   }
 
   function showHistory() {
@@ -268,11 +270,46 @@
     core.appendOutput('usage: /widget list|show|hide|toggle|reset', 'info');
   }
 
+  function handleCat(commandLine) {
+    const text = commandLine.slice(commandLine.toLowerCase().indexOf('cat') + 3).trim();
+    if (!text) {
+      if (root.notes && root.notes.openNew) root.notes.openNew();
+      else core.appendOutput('note editor opened.', 'info');
+      return;
+    }
+    if (root.notes && root.notes.add) {
+      root.notes.add(text);
+      core.appendOutput(`note created: ${escapeHtml(text.slice(0, 40))}${text.length > 40 ? '...' : ''}`, 'success');
+    } else {
+      core.appendOutput('notes module not available.', 'error');
+    }
+  }
+
+  function handleExport() {
+    const data = {
+      notes: root.notes ? root.notes.all() : [],
+      todos: root.todo ? root.todo.all() : [],
+      shortcuts: userShortcuts,
+      config: root.config ? root.config.get() : {},
+    };
+    const json = JSON.stringify(data, null, 2);
+    navigator.clipboard.writeText(json).then(() => {
+      core.appendOutput('data copied to clipboard as JSON.', 'success');
+    }).catch(() => {
+      core.appendOutput('clipboard access denied. check browser permissions.', 'error');
+    });
+  }
+
   function handleSlash(commandLine) {
     const lowerLine = commandLine.toLowerCase().trim();
     const words = lowerLine.split(/\s+/).filter(Boolean);
     const base = words[0] || '';
     const originalWords = commandLine.split(/\s+/).filter(Boolean);
+
+    // Block heavy commands in non-terminal themes
+    if (!isTerminalTheme() && HEAVY_COMMANDS.includes(base)) {
+      return core.appendOutput(`/${base} is only available in terminal theme.`, 'error');
+    }
 
     if (base === 'help') return showHelp(words[1]);
     if (base === 'clear' || base === 'cls') {
@@ -294,6 +331,8 @@
     if (base === 'game') return launchGame(words);
     if (base === 'blur') return handleBlur(words);
     if (base === 'reset') return handleReset();
+    if (base === 'cat') return handleCat(commandLine);
+    if (base === 'export') return handleExport();
 
     if (base === 'yt' && originalWords.length > 1) {
       const q = commandLine.slice(3).trim();
@@ -302,6 +341,10 @@
     if (base === 'gpt' && originalWords.length > 1) {
       const q = commandLine.slice(4).trim();
       return core.routeTo(chatGptPromptUrl(q), `ChatGPT: "${q}"`);
+    }
+    if (base === 'claude' && originalWords.length > 1) {
+      const q = commandLine.slice(7).trim();
+      return core.routeTo(`https://claude.ai/new?q=${encodeURIComponent(q)}`, `Claude: "${q}"`);
     }
     if (base === 'rd' && originalWords.length > 1) {
       const sub = commandLine.slice(3).trim().replace(/^r\//i, '');
@@ -312,6 +355,73 @@
       return core.routeTo(`https://www.google.com/search?q=${encodeURIComponent(q)}`, `search: "${q}"`);
     }
 
+    // ── Easter eggs ──
+    if (base === 'sudo') return core.appendOutput('nice try. you\'re not root here.', 'error');
+    if (base === 'exit') {
+      core.appendOutput('there is no escape.', 'error');
+      const v = document.createElement('div');
+      v.className = 'void-overlay';
+      v.innerHTML = '<span class="void-text">...</span>';
+      document.body.appendChild(v);
+      setTimeout(() => v.remove(), 2500);
+      return;
+    }
+    if (base === 'hello' || base === 'hi') {
+      const greetings = ['hey there! 👋', 'hello, human.', 'sup.', 'greetings, traveler.', 'yo.', '*waves*'];
+      return core.appendOutput(greetings[Math.floor(Math.random() * greetings.length)], 'success');
+    }
+    if (base === 'coffee') {
+      core.appendOutput('brewing... ☕', 'success');
+      const orig = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+      document.documentElement.style.setProperty('--accent', '#6f4e37');
+      setTimeout(() => document.documentElement.style.setProperty('--accent', orig), 1500);
+      return;
+    }
+    if (base === '42') return core.appendOutput('the answer to life, the universe, and everything.', 'info');
+    if (base === 'hack') {
+      const chars = '01アイウエオカキクケコサシスセソ█▓░';
+      let count = 0;
+      const iv = setInterval(() => {
+        let line = '';
+        for (let i = 0; i < 48; i++) line += chars[Math.floor(Math.random() * chars.length)];
+        core.appendOutput(`<span style="color:var(--green);font-size:10px">${line}</span>`, 'info');
+        count++;
+        if (count > 8) { clearInterval(iv); core.appendOutput('access granted.', 'success'); }
+      }, 80);
+      return;
+    }
+    if (base === 'matrix') {
+      let count = 0;
+      const iv = setInterval(() => {
+        let line = '';
+        for (let i = 0; i < 60; i++) line += String.fromCharCode(0x30A0 + Math.random() * 96);
+        core.appendOutput(`<span style="color:#00ff41;font-size:9px;opacity:0.7">${line}</span>`, 'info');
+        count++;
+        if (count > 6) { clearInterval(iv); core.appendOutput('wake up, Neo...', 'success'); }
+      }, 60);
+      return;
+    }
+    if (base === 'fortune') {
+      const fortunes = ['A surprise awaits you at your next commit.','You will mass-delete node_modules... again.','Your code will compile on the first try. Just kidding.','A segfault is in your future. In C, not here.','The bug is not where you think it is.','Today is a good day to refactor.','You will discover a missing semicolon.','An unexpected rebase will bring clarity.'];
+      return core.appendOutput(`🥠 ${fortunes[Math.floor(Math.random() * fortunes.length)]}`, 'info');
+    }
+    if (base === 'xkcd') {
+      const quotes = ['There are only two hard problems in CS: cache invalidation, naming things, and off-by-one errors.','It works on my machine.','// TODO: fix this later','sudo make me a sandwich.','The cloud is just someone else\'s computer.','Have you tried turning it off and on again?'];
+      return core.appendOutput(quotes[Math.floor(Math.random() * quotes.length)], 'info');
+    }
+    if (lowerLine === 'rm -rf /' || lowerLine === 'rm -rf') {
+      core.appendOutput('deleting system files...', 'error');
+      document.body.style.transition = 'transform 0.05s';
+      let shakes = 0;
+      const shakeIv = setInterval(() => {
+        document.body.style.transform = `translateX(${(Math.random() - 0.5) * 8}px)`;
+        shakes++;
+        if (shakes > 14) { clearInterval(shakeIv); document.body.style.transform = ''; core.appendOutput('just kidding. nice try though.', 'success'); }
+      }, 40);
+      return;
+    }
+
+    // Shortcut lookup
     const shortcuts = allShortcuts();
     if (shortcuts[lowerLine]) {
       core.appendOutput(`open: ${escapeHtml(shortcuts[lowerLine].desc)}`, 'success');
@@ -399,6 +509,12 @@
     });
   }
 
+  // Known command names for slash-less execution
+  const KNOWN_COMMANDS = ['help','clear','cls','time','history','layout','widget','widgets','theme','config',
+    'shortcut','shortcuts','rain','animation','fact','todo','pomodoro','game','blur','reset','cat','export',
+    'sudo','exit','hello','hi','coffee','hack','matrix','fortune','xkcd','42',
+    'yt','gpt','claude','rd','g'];
+
   function handle(raw) {
     const command = raw.trim();
     if (!command) return;
@@ -417,9 +533,33 @@
     if (command === '?') return showHelp();
     if (command.startsWith('/')) return handleSlash(command.slice(1).trim());
 
+    // g: prefix for google search
+    if (/^g:\s*/i.test(command)) {
+      const q = command.replace(/^g:\s*/i, '').trim();
+      if (q) return core.routeTo(`https://www.google.com/search?q=${encodeURIComponent(q)}`, `search: "${q}"`);
+      return core.appendOutput('usage: g: <query>', 'error');
+    }
+
+    // Try math first
     const math = tryMath(command);
     if (math !== null) return core.appendOutput(`= ${math}`, 'info');
-    core.routeTo(`https://www.google.com/search?q=${encodeURIComponent(command)}`, `search: "${command}"`);
+
+    // Try as a command without slash
+    const lowerCmd = command.toLowerCase().trim();
+    const firstWord = lowerCmd.split(/\s+/)[0];
+    if (KNOWN_COMMANDS.includes(firstWord) || lowerCmd === 'rm -rf /' || lowerCmd === 'rm -rf') {
+      return handleSlash(command);
+    }
+
+    // Check shortcuts
+    const shortcuts = allShortcuts();
+    if (shortcuts[lowerCmd]) {
+      core.appendOutput(`open: ${escapeHtml(shortcuts[lowerCmd].desc)}`, 'success');
+      setTimeout(() => { window.location.href = shortcuts[lowerCmd].url; }, 160);
+      return;
+    }
+
+    core.appendOutput(`unknown command: ${escapeHtml(command)}. type /help`, 'error');
   }
 
   function patternMatches(pattern, query) {

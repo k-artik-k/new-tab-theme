@@ -1844,319 +1844,34 @@ body:not(.theme-terminal) .top-right {
   display: none;
 }
 
-body.theme-neo {
-  --bg: #f8f8f8;
-  --bg2: #ffffff;
-  --bg3: #ffef5c;
-  --fg: #111111;
-  --fg2: #4d4d4d;
-  --accent: #245cff;
-  --border: #111111;
-  background:
-    repeating-linear-gradient(0deg, rgba(17, 17, 17, 0.06) 0 1px, transparent 1px 34px),
-    repeating-linear-gradient(90deg, rgba(17, 17, 17, 0.06) 0 1px, transparent 1px 34px),
-    #f8f8f8;
-  color: var(--fg);
+/* Outdoor readability: slightly more opaque terminal window */
+body.theme-terminal .terminal-window {
+  background: rgba(13, 17, 23, 0.97);
 }
 
-body.theme-neo .top-bar {
-  height: 52px;
-  padding: 0 28px;
-  background: #ffef5c;
-  color: #111111;
-  border-bottom: 4px solid #111111;
-  font-size: 13px;
+/* Calendar due-date dot */
+.cal-day.has-due {
+  position: relative;
+  cursor: pointer;
 }
 
-body.theme-neo .terminal-container {
-  top: 86px;
-  left: 28px;
-  transform: none;
-  width: min(58vw, 780px);
-  min-width: 0;
-}
-
-body.theme-neo .terminal-window,
-body.theme-neo .todo-panel,
-body.theme-neo .calendar-panel,
-body.theme-neo .pomodoro-standalone,
-body.theme-neo .sticky-panel {
-  background: #ffffff;
-  border: 4px solid #111111;
-  border-radius: 0;
-  box-shadow: 8px 8px 0 #111111;
-}
-
-body.theme-neo .terminal-titlebar {
-  background: #ff6b6b;
-  border-bottom: 4px solid #111111;
-}
-
-body.theme-neo .terminal-body {
-  max-height: 44vh;
-}
-
-body.theme-neo .calendar-panel {
-  top: 86px;
-  left: auto;
-  right: 302px;
-  padding: 14px;
-}
-
-body.theme-neo .todo-panel {
-  top: auto;
-  right: auto;
-  bottom: 28px;
-  left: 28px;
-  width: min(58vw, 780px);
-  max-height: 31vh;
-  padding: 14px;
-}
-
-body.theme-neo .sticky-panel {
-  right: 34px;
-  left: auto;
-  bottom: 30px;
-  width: 242px;
-  max-height: 35vh;
-  padding: 12px;
-}
-
-body.theme-neo .pomodoro-standalone {
-  top: 342px;
-  right: 48px;
-  bottom: auto;
-  left: auto;
-  transform: none;
-  color: #111111;
-}
-
-body.theme-neo .analog-face {
-  background: #ffffff;
-  border: 4px solid #111111;
-  box-shadow: 8px 8px 0 #111111;
-}
-
-body.theme-neo .todo-add-btn,
-body.theme-neo .todo-filter,
-body.theme-neo .pomodoro-actions button,
-body.theme-neo .sticky-btn,
-body.theme-neo .modal-btn,
-body.theme-neo .modal-toggle-preview {
-  border: 2px solid #111111;
-  border-radius: 0;
-  box-shadow: 3px 3px 0 #111111;
-}
-
-body.theme-liquid {
-  --bg: #eaf2f7;
-  --bg2: rgba(255, 255, 255, 0.46);
-  --bg3: rgba(255, 255, 255, 0.66);
-  --fg: #16202a;
-  --fg2: #5d6a76;
-  --accent: #007aff;
-  --border: rgba(255, 255, 255, 0.56);
-  background: #eaf2f7;
-  color: var(--fg);
-}
-
-body.theme-liquid::before {
+.cal-day.has-due::after {
   content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.74), rgba(255, 255, 255, 0) 44%),
-    linear-gradient(315deg, rgba(68, 156, 255, 0.18), rgba(255, 255, 255, 0) 50%),
-    #eaf2f7;
-  z-index: 0;
-}
-
-body.theme-liquid .top-bar {
-  top: 16px;
-  left: 18px;
-  right: 18px;
-  height: 48px;
-  border: 1px solid rgba(255, 255, 255, 0.56);
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.42);
-  backdrop-filter: blur(22px) saturate(1.35);
-  box-shadow: 0 12px 36px rgba(41, 72, 102, 0.14);
-}
-
-body.theme-liquid .terminal-container {
-  top: 52%;
-  left: 34px;
-  transform: translateY(-50%);
-  width: min(56vw, 780px);
-  min-width: 0;
-}
-
-body.theme-liquid .terminal-window,
-body.theme-liquid .todo-panel,
-body.theme-liquid .calendar-panel,
-body.theme-liquid .pomodoro-standalone,
-body.theme-liquid .sticky-panel,
-body.theme-liquid .modal {
-  background: rgba(255, 255, 255, 0.42);
-  border: 1px solid rgba(255, 255, 255, 0.62);
-  border-radius: 22px;
-  backdrop-filter: blur(24px) saturate(1.35);
-  box-shadow: 0 20px 52px rgba(40, 76, 112, 0.18);
-}
-
-body.theme-liquid .terminal-titlebar {
-  background: rgba(255, 255, 255, 0.32);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.56);
-}
-
-body.theme-liquid .terminal-body {
-  max-height: 58vh;
-}
-
-body.theme-liquid .calendar-panel {
-  top: 92px;
-  left: auto;
-  right: 312px;
-  padding: 16px;
-}
-
-body.theme-liquid .todo-panel {
-  top: 332px;
-  right: 34px;
-  width: 274px;
-  max-height: 35vh;
-  padding: 16px;
-}
-
-body.theme-liquid .sticky-panel {
-  bottom: 28px;
-  left: auto;
-  right: 34px;
-  width: 274px;
-  max-height: 30vh;
-  padding: 16px;
-}
-
-body.theme-liquid .pomodoro-standalone {
-  left: 34px;
-  bottom: 28px;
-  transform: none;
-}
-
-body.theme-liquid .analog-face {
-  background: rgba(255, 255, 255, 0.48);
-  border-color: rgba(255, 255, 255, 0.68);
-  backdrop-filter: blur(26px) saturate(1.35);
-  box-shadow: 0 18px 50px rgba(40, 76, 112, 0.2);
-}
-
-body.theme-aero {
-  --bg: #8fc7f0;
-  --bg2: rgba(240, 250, 255, 0.48);
-  --bg3: rgba(255, 255, 255, 0.62);
-  --fg: #13202c;
-  --fg2: #4e6071;
-  --accent: #2f7ed8;
-  --border: rgba(255, 255, 255, 0.78);
-  background:
-    linear-gradient(180deg, #8fc7f0 0%, #d6f0ff 52%, #6eb05a 53%, #3b872e 100%);
-  color: var(--fg);
-}
-
-body.theme-aero .top-bar {
-  height: 46px;
-  background: rgba(23, 76, 126, 0.42);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.72);
-  box-shadow: inset 0 1px rgba(255, 255, 255, 0.56), 0 10px 26px rgba(0, 48, 92, 0.22);
-  backdrop-filter: blur(16px) saturate(1.25);
-  color: #ffffff;
-}
-
-body.theme-aero .terminal-container {
-  top: 92px;
-  left: 24px;
-  transform: none;
-  width: min(60vw, 820px);
-  min-width: 0;
-}
-
-body.theme-aero .terminal-window,
-body.theme-aero .todo-panel,
-body.theme-aero .calendar-panel,
-body.theme-aero .pomodoro-standalone,
-body.theme-aero .sticky-panel,
-body.theme-aero .modal {
-  background: rgba(240, 250, 255, 0.48);
-  border: 1px solid rgba(255, 255, 255, 0.78);
-  border-radius: 7px;
-  backdrop-filter: blur(18px) saturate(1.25);
-  box-shadow: inset 0 1px rgba(255, 255, 255, 0.75), 0 14px 32px rgba(0, 43, 82, 0.28);
-}
-
-body.theme-aero .terminal-titlebar {
-  background: rgba(35, 113, 184, 0.44);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.72);
-  color: #ffffff;
-}
-
-body.theme-aero .terminal-body {
-  max-height: 48vh;
-}
-
-body.theme-aero .calendar-panel {
-  left: auto;
-  right: 310px;
-  top: 82px;
-  padding: 14px;
-}
-
-body.theme-aero .todo-panel {
-  top: auto;
-  bottom: 25px;
-  right: 24px;
-  width: 284px;
-  max-height: 38vh;
-  padding: 14px;
-}
-
-body.theme-aero .sticky-panel {
-  left: 24px;
-  bottom: 25px;
-  width: min(60vw, 420px);
-  max-height: 28vh;
-  padding: 14px;
-}
-
-body.theme-aero .pomodoro-standalone {
+  position: absolute;
+  bottom: 1px;
   left: 50%;
-  bottom: 25px;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  background: var(--accent);
+  border-radius: 50%;
 }
 
-body.theme-aero .analog-face {
-  background: rgba(238, 248, 255, 0.52);
-  border: 1px solid rgba(255, 255, 255, 0.86);
-  backdrop-filter: blur(20px) saturate(1.25);
-  box-shadow: inset 0 1px rgba(255, 255, 255, 0.86), 0 16px 36px rgba(0, 43, 82, 0.26);
+.cal-day.today.has-due::after {
+  background: var(--bg);
 }
 
-body.theme-aero .todo-add-btn,
-body.theme-aero .todo-filter,
-body.theme-aero .sticky-btn,
-body.theme-aero .modal-btn,
-body.theme-aero .modal-toggle-preview {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(206, 229, 247, 0.75));
-  border-color: rgba(67, 118, 162, 0.62);
-  color: #173955;
-}
-
-body.theme-aero .todo-filter.active,
-body.theme-aero .todo-add-btn:hover,
-body.theme-aero .sticky-btn:hover {
-  color: #ffffff;
-  background: #2f7ed8;
-}
-
+/* â”€â”€â”€â”€â”€â”€â”€â”€ Responsive â”€â”€â”€â”€â”€â”€â”€â”€ */
 @media (max-width: 900px) {
   body:not(.theme-terminal) {
     overflow-y: auto;
@@ -2215,11 +1930,16 @@ body.theme-aero .sticky-btn:hover {
   }
 
   body.theme-terminal .sticky-panel {
-    display: none;
+    display: flex;
+    width: calc(100vw - 32px);
+    left: 16px;
+    right: auto;
+    bottom: 16px;
+    max-height: 24vh;
   }
 }
 
-/* Movable/resizable widgets */
+/* â”€â”€â”€â”€â”€â”€â”€â”€ Movable/resizable widgets â”€â”€â”€â”€â”€â”€â”€â”€ */
 .layout-widget {
   isolation: isolate;
 }
@@ -2290,491 +2010,7 @@ body.theme-aero .sticky-btn:hover {
   align-items: center;
 }
 
-/* Premium theme pass */
-body.theme-terminal .sticky-panel {
-  display: block;
-}
-
-body.theme-terminal .floating-note {
-  background: #fff4a8;
-  border-color: #c9aa36;
-  color: #2f2a12;
-}
-
-body.theme-terminal .fn-header {
-  background: #efd65b;
-}
-
-body.theme-neo {
-  --bg: #f7f8fd;
-  --bg2: #ffffff;
-  --bg3: #eef3ff;
-  --fg: #18202b;
-  --fg2: #657083;
-  --accent: #1a73e8;
-  --green: #0b8043;
-  --red: #d93025;
-  --yellow: #fbbc04;
-  --blue: #1a73e8;
-  --magenta: #a142f4;
-  --cyan: #129eaf;
-  --border: #dde3f0;
-  font-family: 'Google Sans', 'Product Sans', Inter, system-ui, sans-serif;
-  background:
-    linear-gradient(135deg, rgba(66, 133, 244, 0.14) 0%, rgba(66, 133, 244, 0) 34%),
-    linear-gradient(315deg, rgba(52, 168, 83, 0.13) 0%, rgba(52, 168, 83, 0) 36%),
-    linear-gradient(180deg, #fbfcff 0%, #eef3ff 100%);
-}
-
-body.theme-neo .rain-bg {
-  opacity: 0.18;
-}
-
-body.theme-neo .top-bar {
-  top: 16px;
-  left: 18px;
-  right: 18px;
-  height: 58px;
-  padding: 0 24px;
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(218, 224, 235, 0.9);
-  border-radius: 30px;
-  box-shadow: 0 16px 40px rgba(50, 70, 110, 0.12);
-  color: var(--fg);
-}
-
-body.theme-neo .terminal-container {
-  top: 96px;
-  left: 32px;
-  width: min(58vw, 800px);
-}
-
-body.theme-neo .terminal-window {
-  background: #11151d;
-  border: 1px solid rgba(31, 42, 59, 0.9);
-  border-radius: 28px;
-  box-shadow: 0 24px 70px rgba(32, 48, 80, 0.24);
-}
-
-body.theme-neo .terminal-titlebar {
-  padding: 14px 18px;
-  background: linear-gradient(180deg, #222a37, #171d27);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 28px 28px 0 0;
-}
-
-body.theme-neo .terminal-body {
-  color: #e8eaed;
-}
-
-body.theme-neo .calendar-panel,
-body.theme-neo .todo-panel,
-body.theme-neo .sticky-panel,
-body.theme-neo .pomodoro-standalone,
-body.theme-neo .modal {
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(218, 224, 235, 0.95);
-  border-radius: 28px;
-  box-shadow: 0 18px 50px rgba(50, 70, 110, 0.14);
-}
-
-body.theme-neo .calendar-panel {
-  right: 318px;
-  padding: 18px;
-}
-
-body.theme-neo .todo-panel {
-  bottom: 30px;
-  padding: 18px;
-}
-
-body.theme-neo .sticky-panel {
-  right: 34px;
-  padding: 16px;
-}
-
-body.theme-neo .todo-title,
-body.theme-neo .sticky-title,
-body.theme-neo .cal-title {
-  color: #41516d;
-  font-weight: 700;
-}
-
-body.theme-neo .todo-item {
-  background: #f7f9ff;
-  border: 1px solid #e3e9f6;
-  border-radius: 18px;
-  padding: 9px 10px;
-}
-
-body.theme-neo .todo-item:hover {
-  background: #edf4ff;
-}
-
-body.theme-neo .todo-add-btn,
-body.theme-neo .todo-filter,
-body.theme-neo .pomodoro-actions button,
-body.theme-neo .sticky-btn,
-body.theme-neo .modal-btn,
-body.theme-neo .modal-toggle-preview {
-  border: 1px solid #d8e2f3;
-  border-radius: 999px;
-  box-shadow: none;
-  background: #eef3ff;
-  color: #1a4e9f;
-}
-
-body.theme-neo .todo-filter.active,
-body.theme-neo .todo-add-btn:hover,
-body.theme-neo .sticky-btn:hover,
-body.theme-neo .pomodoro-actions button:hover {
-  background: #1a73e8;
-  border-color: #1a73e8;
-  color: #ffffff;
-}
-
-body.theme-neo .analog-face {
-  background: linear-gradient(180deg, #ffffff, #eef3ff);
-  border: 1px solid rgba(218, 224, 235, 0.95);
-  border-radius: 50%;
-  box-shadow: 0 22px 56px rgba(50, 70, 110, 0.18);
-}
-
-body.theme-neo .floating-note {
-  background: #fff2b8;
-  border: 1px solid #edd577;
-  border-radius: 18px;
-  box-shadow: 0 14px 34px rgba(101, 78, 20, 0.18);
-}
-
-body.theme-neo .fn-header {
-  background: rgba(255, 225, 112, 0.78);
-  border-radius: 18px 18px 0 0;
-}
-
-body.theme-liquid {
-  --bg: #05070d;
-  --bg2: rgba(18, 23, 34, 0.58);
-  --bg3: rgba(255, 255, 255, 0.08);
-  --fg: #eef6ff;
-  --fg2: #93a2b7;
-  --accent: #7dd3fc;
-  --green: #80ed99;
-  --red: #ff6b7a;
-  --yellow: #ffd166;
-  --blue: #8ab4ff;
-  --magenta: #d8b4fe;
-  --cyan: #67e8f9;
-  --border: rgba(255, 255, 255, 0.14);
-  background:
-    linear-gradient(145deg, rgba(17, 34, 64, 0.95) 0%, rgba(5, 7, 13, 0.98) 46%),
-    linear-gradient(315deg, rgba(61, 22, 74, 0.56) 0%, rgba(5, 7, 13, 0) 54%),
-    #05070d;
-  color: var(--fg);
-}
-
-body.theme-liquid::before {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0) 34%),
-    linear-gradient(90deg, rgba(125, 211, 252, 0.18), rgba(216, 180, 254, 0.1) 48%, rgba(128, 237, 153, 0.08));
-  opacity: 1;
-}
-
-body.theme-liquid .rain-bg {
-  opacity: 0.26;
-}
-
-body.theme-liquid .top-bar {
-  top: 16px;
-  left: 20px;
-  right: 20px;
-  height: 56px;
-  color: #eef6ff;
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.05));
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 28px;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.36), inset 0 1px rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(28px) saturate(1.45);
-}
-
-body.theme-liquid .terminal-window,
-body.theme-liquid .todo-panel,
-body.theme-liquid .calendar-panel,
-body.theme-liquid .pomodoro-standalone,
-body.theme-liquid .sticky-panel,
-body.theme-liquid .modal {
-  color: var(--fg);
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.055));
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 30px;
-  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.42), inset 0 1px rgba(255, 255, 255, 0.18);
-  backdrop-filter: blur(30px) saturate(1.45);
-}
-
-body.theme-liquid .terminal-titlebar {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.045));
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 30px 30px 0 0;
-}
-
-body.theme-liquid .cmd-input,
-body.theme-liquid .todo-input,
-body.theme-liquid .note-editor {
-  color: #f5fbff;
-}
-
-body.theme-liquid .todo-item {
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 18px;
-  padding: 9px 10px;
-}
-
-body.theme-liquid .todo-item:hover {
-  background: rgba(125, 211, 252, 0.13);
-}
-
-body.theme-liquid .todo-add-btn,
-body.theme-liquid .todo-filter,
-body.theme-liquid .pomodoro-actions button,
-body.theme-liquid .sticky-btn,
-body.theme-liquid .modal-btn,
-body.theme-liquid .modal-toggle-preview {
-  background: rgba(255, 255, 255, 0.09);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  color: #d8f4ff;
-  border-radius: 999px;
-}
-
-body.theme-liquid .todo-filter.active,
-body.theme-liquid .todo-add-btn:hover,
-body.theme-liquid .sticky-btn:hover,
-body.theme-liquid .pomodoro-actions button:hover {
-  background: rgba(125, 211, 252, 0.28);
-  color: #ffffff;
-}
-
-body.theme-liquid .analog-face {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.055));
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4), inset 0 1px rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(32px) saturate(1.45);
-}
-
-body.theme-liquid .analog-mark,
-body.theme-liquid .analog-hand.hour,
-body.theme-liquid .analog-hand.minute,
-body.theme-liquid .analog-pin {
-  color: #eef6ff;
-  background: #eef6ff;
-}
-
-body.theme-liquid .analog-mark {
-  background: transparent;
-}
-
-body.theme-liquid .floating-note {
-  background: rgba(255, 229, 140, 0.9);
-  border: 1px solid rgba(255, 244, 200, 0.72);
-  border-radius: 18px;
-  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.38);
-}
-
-body.theme-aero {
-  --bg: #6db2e2;
-  --bg2: rgba(222, 241, 252, 0.64);
-  --bg3: rgba(255, 255, 255, 0.58);
-  --fg: #07192a;
-  --fg2: #38516b;
-  --accent: #1f6fb5;
-  --border: rgba(255, 255, 255, 0.72);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background:
-    linear-gradient(180deg, #72bcec 0%, #bde8ff 47%, #d7f3ff 50%, #78b65d 51%, #2f8128 100%);
-}
-
-body.theme-aero .top-bar {
-  height: 50px;
-  background: linear-gradient(180deg, rgba(190, 229, 251, 0.62), rgba(47, 126, 190, 0.42) 48%, rgba(20, 85, 150, 0.54));
-  border: 1px solid rgba(255, 255, 255, 0.76);
-  border-radius: 0 0 8px 8px;
-  box-shadow: inset 0 1px rgba(255, 255, 255, 0.76), inset 0 -1px rgba(0, 44, 95, 0.35), 0 10px 24px rgba(0, 35, 75, 0.22);
-  backdrop-filter: blur(18px) saturate(1.25);
-  color: #ffffff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
-}
-
-body.theme-aero .terminal-window,
-body.theme-aero .todo-panel,
-body.theme-aero .calendar-panel,
-body.theme-aero .pomodoro-standalone,
-body.theme-aero .sticky-panel,
-body.theme-aero .modal {
-  background: linear-gradient(180deg, rgba(231, 247, 255, 0.62), rgba(171, 216, 243, 0.42));
-  border: 1px solid rgba(27, 91, 147, 0.72);
-  border-radius: 7px;
-  box-shadow:
-    inset 0 1px rgba(255, 255, 255, 0.88),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.32),
-    0 16px 38px rgba(0, 40, 86, 0.34);
-  backdrop-filter: blur(18px) saturate(1.28);
-}
-
-body.theme-aero .terminal-titlebar,
-body.theme-aero .todo-header,
-body.theme-aero .sticky-header,
-body.theme-aero .cal-header,
-body.theme-aero .modal-header {
-  min-height: 30px;
-  padding: 7px 10px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(170, 217, 244, 0.62) 45%, rgba(74, 154, 213, 0.55) 46%, rgba(41, 111, 178, 0.58));
-  border-bottom: 1px solid rgba(0, 60, 120, 0.32);
-  border-radius: 6px 6px 0 0;
-  color: #09284a;
-  text-shadow: 0 1px rgba(255, 255, 255, 0.74);
-}
-
-body.theme-aero .terminal-dots,
-body.theme-aero .terminal-titlebar-spacer {
-  display: none;
-}
-
-body.theme-aero .terminal-titlebar::after {
-  content: '_  □  x';
-  margin-left: auto;
-  padding: 1px 9px 3px;
-  border: 1px solid rgba(46, 88, 130, 0.62);
-  border-radius: 0 0 4px 4px;
-  background: linear-gradient(180deg, #fffefe, #b9d9ef 48%, #7daed0 49%, #d85b4f 50%, #a52620);
-  color: #ffffff;
-  font-family: 'Segoe UI', Tahoma, sans-serif;
-  font-size: 11px;
-  letter-spacing: 3px;
-  text-shadow: 0 1px rgba(0, 0, 0, 0.55);
-}
-
-body.theme-aero .terminal-body {
-  background: rgba(255, 255, 255, 0.76);
-  margin: 6px;
-  border: 1px solid rgba(69, 103, 132, 0.46);
-  border-radius: 2px;
-  color: #07192a;
-}
-
-body.theme-aero .cmd-input {
-  color: #07192a;
-}
-
-body.theme-aero .todo-item {
-  background: rgba(255, 255, 255, 0.58);
-  border: 1px solid rgba(90, 132, 168, 0.32);
-  border-radius: 4px;
-}
-
-body.theme-aero .todo-add-btn,
-body.theme-aero .todo-filter,
-body.theme-aero .pomodoro-actions button,
-body.theme-aero .sticky-btn,
-body.theme-aero .modal-btn,
-body.theme-aero .modal-toggle-preview {
-  background: linear-gradient(180deg, #ffffff, #d9edf9 47%, #a8d0ec 48%, #e7f7ff);
-  border: 1px solid #5b8db7;
-  border-radius: 3px;
-  color: #143e62;
-  box-shadow: inset 0 1px rgba(255, 255, 255, 0.9);
-}
-
-body.theme-aero .todo-filter.active,
-body.theme-aero .todo-add-btn:hover,
-body.theme-aero .sticky-btn:hover,
-body.theme-aero .pomodoro-actions button:hover {
-  background: linear-gradient(180deg, #e7f7ff, #8cc5ea 48%, #2e84cb 49%, #1766ad);
-  color: #ffffff;
-  text-shadow: 0 1px rgba(0, 0, 0, 0.45);
-}
-
-body.theme-aero .analog-face {
-  background: linear-gradient(145deg, rgba(18, 32, 45, 0.68), rgba(8, 15, 24, 0.44));
-  border: 1px solid rgba(255, 255, 255, 0.62);
-  box-shadow: inset 0 1px rgba(255, 255, 255, 0.52), 0 18px 42px rgba(0, 35, 76, 0.42);
-  backdrop-filter: blur(18px) saturate(1.25);
-}
-
-body.theme-aero .analog-mark {
-  color: #ffffff;
-  text-shadow: 0 1px 2px #000000;
-}
-
-body.theme-aero .analog-hand.hour,
-body.theme-aero .analog-hand.minute,
-body.theme-aero .analog-pin {
-  background: #ffffff;
-}
-
-body.theme-aero .floating-note {
-  background: #fff7a9;
-  border: 1px solid #d3b546;
-  border-radius: 3px;
-  box-shadow: 0 12px 26px rgba(0, 36, 78, 0.32);
-}
-
-body.theme-aero .fn-header {
-  background: linear-gradient(180deg, #fff4a5, #e8cf62);
-  border-radius: 3px 3px 0 0;
-}
-
-@media (max-width: 900px) {
-  body.theme-terminal .sticky-panel {
-    display: flex;
-    width: calc(100vw - 32px);
-    left: 16px;
-    right: auto;
-    bottom: 16px;
-    max-height: 24vh;
-  }
-}
-
-/* Rollback/premium pass: terminal stays fixed; themes become separate dashboards */
-.widget-hidden {
-  display: none !important;
-}
-
-body:not(.layout-edit) .layout-resize-grip {
-  display: none !important;
-}
-
-body:not(.layout-edit) .layout-drag-handle {
-  cursor: default;
-}
-
-body.theme-terminal .layout-resize-grip {
-  display: none !important;
-}
-
-body.theme-terminal .top-bar {
-  display: flex;
-}
-
-body:not(.theme-terminal) .top-bar {
-  display: none !important;
-}
-
-body:not(.theme-terminal) .analog-clock {
-  top: 34px;
-}
-
-body:not(.theme-terminal) .terminal-container {
-  top: 34px;
-}
-
-body:not(.theme-terminal) .calendar-panel {
-  top: 34px;
-}
-
-body:not(.theme-terminal) .fact-bar {
-  display: none;
-}
-
+/* â”€â”€â”€â”€â”€â”€â”€â”€ Terminal theme specifics â”€â”€â”€â”€â”€â”€â”€â”€ */
 body.theme-terminal .sticky-panel {
   display: block;
   position: fixed;
@@ -2793,6 +2029,32 @@ body.theme-terminal .notes-container {
   max-height: 40vh;
 }
 
+body.theme-terminal .floating-note {
+  background: #fff4a8;
+  border-color: #c9aa36;
+  color: #2f2a12;
+}
+
+body.theme-terminal .fn-header {
+  background: #efd65b;
+}
+
+body.theme-terminal .note-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  color: var(--fg);
+}
+
+body.theme-terminal .top-bar {
+  display: flex;
+}
+
+body.theme-terminal .layout-resize-grip {
+  display: none !important;
+}
+
+/* â”€â”€â”€â”€â”€â”€â”€â”€ Note card base â”€â”€â”€â”€â”€â”€â”€â”€ */
 .note-card {
   max-height: 138px;
   overflow: hidden;
@@ -2812,318 +2074,526 @@ body.theme-terminal .notes-container {
   color: inherit;
 }
 
-body.theme-terminal .note-card {
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--accent);
-  color: var(--fg);
+/* â”€â”€â”€â”€â”€â”€â”€â”€ Shared widget rules â”€â”€â”€â”€â”€â”€â”€â”€ */
+.widget-hidden {
+  display: none !important;
 }
 
-/* Google-flavored neo brutalism: bold, rounded, usable */
+body:not(.layout-edit) .layout-resize-grip {
+  display: none !important;
+}
+
+body:not(.layout-edit) .layout-drag-handle {
+  cursor: default;
+}
+
+/* Hide top bar for themes without it (aero uses it as taskbar) */
+body:not(.theme-terminal):not(.theme-aero) .top-bar {
+  display: none !important;
+}
+
+body:not(.theme-terminal) .analog-clock {
+  top: 34px;
+}
+
+body:not(.theme-terminal) .terminal-container {
+  top: 34px;
+}
+
+body:not(.theme-terminal) .calendar-panel {
+  top: 34px;
+}
+
+body:not(.theme-terminal) .fact-bar {
+  display: none;
+}
+
+
+/* ═══════════════════════════════════════════════════════
+   HIDE POMODORO IN ALL NON-TERMINAL THEMES
+   ═══════════════════════════════════════════════════════ */
+body:not(.theme-terminal) .pomodoro-standalone {
+  display: none !important;
+}
+
+/* Quick links bar - hidden by default */
+.quick-links-bar {
+  display: none;
+}
+
+/* ═══════════════════════════════════════════════════════
+   THEME: NEO — pastel minimal
+   Layout: calendar(top-left) clock(top-right)
+           terminal(center, large)
+           quicklinks(bottom-left) todo(bottom-right)
+   ═══════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+
 body.theme-neo {
-  --bg: #f9fafb;
+  --bg: #F2ECFF;
   --bg2: #ffffff;
-  --bg3: #f1f4f9;
-  --fg: #111827;
-  --fg2: #5f6368;
-  --accent: #1a73e8;
-  --green: #34a853;
-  --red: #ea4335;
-  --yellow: #fbbc04;
-  --blue: #4285f4;
-  --magenta: #a142f4;
-  --cyan: #00acc1;
-  --border: #202124;
-  font-family: 'Google Sans', 'Product Sans', Inter, system-ui, sans-serif;
-  background:
-    linear-gradient(135deg, rgba(66, 133, 244, 0.16), transparent 34%),
-    linear-gradient(315deg, rgba(251, 188, 4, 0.18), transparent 38%),
-    #f9fafb;
+  --bg3: #f5f0ff;
+  --fg: #2D2B3D;
+  --fg2: #8B85A0;
+  --accent: #B08BFF;
+  --green: #7ed6a5;
+  --red: #f5a0a0;
+  --yellow: #f5d780;
+  --blue: #8bc5f5;
+  --magenta: #d8a0f5;
+  --border: #2D2B3D;
+  --neo-calendar: #D6F5D6;
+  --neo-clock: #FFF5D6;
+  --neo-terminal: #1E1E2E;
+  --neo-quicklinks: #FFE5C8;
+  --neo-todo: #FFD6E8;
+  --font: 'DM Sans', 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg) !important;
+  color: var(--fg);
+  font-family: var(--font);
+  overflow: hidden;
 }
 
-body.theme-neo .terminal-container {
-  left: 30px;
-  width: min(58vw, 790px);
-}
-
-body.theme-neo .terminal-window,
-body.theme-neo .todo-panel,
-body.theme-neo .calendar-panel,
+/* ── Hide elements not in wireframe ── */
+body.theme-neo .scanlines,
+body.theme-neo .rain-bg,
+body.theme-neo .top-bar,
 body.theme-neo .sticky-panel,
-body.theme-neo .pomodoro-standalone,
-body.theme-neo .modal {
-  background: #ffffff;
-  border: 3px solid #202124;
-  border-radius: 26px;
-  box-shadow: 8px 8px 0 #202124, 0 22px 50px rgba(60, 64, 67, 0.16);
+body.theme-neo .fact-bar,
+body.theme-neo .pomodoro-standalone {
+  display: none !important;
 }
 
-body.theme-neo .terminal-titlebar,
-body.theme-neo .todo-header,
-body.theme-neo .sticky-header,
-body.theme-neo .cal-header,
-body.theme-neo .modal-header {
-  background: #e8f0fe;
-  border-bottom: 3px solid #202124;
-  border-radius: 23px 23px 0 0;
-  color: #202124;
+/* ── Show quick links bar ── */
+body.theme-neo .quick-links-bar {
+  display: flex !important;
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  right: 50%;
+  height: auto;
+  padding: 14px 18px;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  background: var(--neo-quicklinks);
+  border: 3px solid var(--border);
+  border-radius: 14px;
+  z-index: 10;
 }
 
-body.theme-neo .terminal-window {
-  background: #111827;
+body.theme-neo .ql-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  background: #fff;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  color: var(--fg);
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  text-transform: lowercase;
+  letter-spacing: 0.02em;
 }
 
-body.theme-neo .terminal-titlebar {
-  background: #8ab4f8;
+body.theme-neo .ql-link:hover {
+  background: var(--border);
+  color: #fff;
 }
 
-body.theme-neo .terminal-body {
-  color: #eef3ff;
-}
-
-body.theme-neo .todo-panel {
-  left: 30px;
-  right: auto;
-  width: min(58vw, 790px);
-  bottom: 28px;
-}
-
+/* ── Calendar — top left ── */
 body.theme-neo .calendar-panel {
-  right: 300px;
+  position: fixed !important;
+  top: 24px;
+  left: 24px;
+  right: auto !important;
+  bottom: auto !important;
+  width: 260px;
+  background: var(--neo-calendar);
+  border: 3px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  z-index: 10;
+  transform: none !important;
+  margin: 0 !important;
 }
 
-body.theme-neo .sticky-panel {
-  right: 30px;
-  width: 250px;
+body.theme-neo .cal-header {
+  display: none;
 }
 
+body.theme-neo .cal-grid {
+  gap: 2px;
+}
+
+body.theme-neo .cal-day-header {
+  color: var(--fg2);
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+body.theme-neo .cal-day {
+  color: var(--fg);
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 6px;
+  padding: 4px;
+}
+
+body.theme-neo .cal-day.today {
+  background: var(--border);
+  color: #fff;
+  font-weight: 700;
+  border-radius: 6px;
+}
+
+body.theme-neo .cal-day.weekend {
+  color: var(--fg2);
+}
+
+body.theme-neo .cal-day.empty {
+  color: transparent;
+}
+
+body.theme-neo .cal-day.has-due::after {
+  background: #f07178;
+}
+
+/* ── Analog Clock — top right ── */
 body.theme-neo .analog-clock {
-  right: 34px;
-  width: 224px;
-  height: 224px;
+  position: fixed !important;
+  top: 24px;
+  right: 24px;
+  left: auto !important;
+  bottom: auto !important;
+  width: 180px;
+  height: 180px;
+  background: var(--neo-clock);
+  border: 3px solid var(--border);
+  border-radius: 50%;
+  z-index: 10;
+  transform: none !important;
+  margin: 0 !important;
 }
 
 body.theme-neo .analog-face {
-  background: #ffffff;
-  border: 3px solid #202124;
-  box-shadow: 8px 8px 0 #202124;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
-body.theme-neo .todo-add-btn,
-body.theme-neo .todo-filter,
-body.theme-neo .pomodoro-actions button,
-body.theme-neo .sticky-btn,
-body.theme-neo .modal-btn,
-body.theme-neo .modal-toggle-preview {
-  border: 2px solid #202124;
-  border-radius: 999px;
-  box-shadow: 3px 3px 0 #202124;
-  background: #ffffff;
-  color: #202124;
+body.theme-neo .analog-face::before {
+  border-color: transparent;
 }
 
-body.theme-neo .todo-filter.active,
-body.theme-neo .todo-add-btn:hover,
-body.theme-neo .sticky-btn:hover,
-body.theme-neo .pomodoro-actions button:hover {
-  background: #1a73e8;
-  color: #ffffff;
+body.theme-neo .analog-mark {
+  color: var(--border);
+  font-family: var(--font);
+  font-weight: 700;
+  font-size: 14px;
 }
 
-body.theme-neo .note-card {
-  background: #fff7cc;
-  border: 2px solid #202124;
-  border-left-width: 6px;
-  border-radius: 18px;
+body.theme-neo .analog-hand.hour {
+  background: var(--border);
+  width: 5px;
+  border-radius: 3px;
 }
 
-/* Apple-ish liquid glass: no header, premium dark desktop */
-body.theme-liquid {
-  --bg: #05070d;
-  --bg2: rgba(18, 22, 32, 0.56);
-  --bg3: rgba(255, 255, 255, 0.08);
-  --fg: #f5f7fb;
-  --fg2: #9aa7ba;
-  --accent: #8bdcff;
-  --green: #9ef0b2;
-  --red: #ff7a87;
-  --yellow: #ffd86b;
-  --blue: #9bc4ff;
-  --magenta: #e4b7ff;
-  --cyan: #9be8ff;
-  --border: rgba(255, 255, 255, 0.16);
-  background:
-    linear-gradient(140deg, rgba(18, 30, 52, 0.96), rgba(5, 7, 13, 0.98) 48%),
-    linear-gradient(315deg, rgba(82, 35, 109, 0.48), rgba(5, 7, 13, 0) 52%),
-    #05070d;
-}
-
-body.theme-liquid .terminal-container {
-  left: 34px;
-  width: min(56vw, 780px);
-}
-
-body.theme-liquid .terminal-window,
-body.theme-liquid .todo-panel,
-body.theme-liquid .calendar-panel,
-body.theme-liquid .sticky-panel,
-body.theme-liquid .pomodoro-standalone,
-body.theme-liquid .modal {
-  color: var(--fg);
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.055));
-  border: 1px solid rgba(255, 255, 255, 0.17);
-  border-radius: 30px;
-  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.44), inset 0 1px rgba(255, 255, 255, 0.18);
-  backdrop-filter: blur(34px) saturate(1.55);
-}
-
-body.theme-liquid .terminal-titlebar,
-body.theme-liquid .todo-header,
-body.theme-liquid .sticky-header,
-body.theme-liquid .cal-header,
-body.theme-liquid .modal-header {
-  background: rgba(255, 255, 255, 0.08);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 30px 30px 0 0;
-}
-
-body.theme-liquid .todo-panel {
-  right: 34px;
-  top: 318px;
-}
-
-body.theme-liquid .sticky-panel {
-  right: 34px;
-  bottom: 28px;
-}
-
-body.theme-liquid .pomodoro-standalone {
-  left: 34px;
-  bottom: 28px;
-}
-
-body.theme-liquid .analog-clock {
-  right: 36px;
-  width: 210px;
-  height: 210px;
-}
-
-body.theme-liquid .analog-face {
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.06));
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.48), inset 0 1px rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(36px) saturate(1.65);
-}
-
-body.theme-liquid .analog-mark {
-  color: rgba(245, 247, 251, 0.82);
-  font-size: 12px;
-}
-
-body.theme-liquid .analog-hand.hour,
-body.theme-liquid .analog-hand.minute,
-body.theme-liquid .analog-pin {
-  background: #f5f7fb;
-}
-
-body.theme-liquid .analog-hand.second {
-  background: #8bdcff;
-}
-
-body.theme-liquid .note-card {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-left: 4px solid rgba(139, 220, 255, 0.8);
-  border-radius: 18px;
-  color: var(--fg);
-}
-
-/* Windows 7 aero: no top header, glass windows on a desktop */
-body.theme-aero {
-  --bg: #6db2e2;
-  --bg2: rgba(222, 241, 252, 0.64);
-  --bg3: rgba(255, 255, 255, 0.62);
-  --fg: #07192a;
-  --fg2: #38516b;
-  --accent: #1f6fb5;
-  --border: rgba(255, 255, 255, 0.72);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background:
-    linear-gradient(180deg, #72bcec 0%, #bde8ff 47%, #d7f3ff 50%, #77b65d 51%, #2d7b27 100%);
-}
-
-body.theme-aero .terminal-window,
-body.theme-aero .todo-panel,
-body.theme-aero .calendar-panel,
-body.theme-aero .sticky-panel,
-body.theme-aero .pomodoro-standalone,
-body.theme-aero .modal {
-  background: linear-gradient(180deg, rgba(236, 249, 255, 0.68), rgba(130, 190, 227, 0.38));
-  border: 1px solid rgba(24, 83, 138, 0.74);
-  border-radius: 7px;
-  box-shadow:
-    inset 0 1px rgba(255, 255, 255, 0.92),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.34),
-    0 18px 40px rgba(0, 40, 86, 0.36);
-  backdrop-filter: blur(18px) saturate(1.28);
-}
-
-body.theme-aero .terminal-titlebar,
-body.theme-aero .todo-header,
-body.theme-aero .sticky-header,
-body.theme-aero .cal-header,
-body.theme-aero .modal-header {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(169, 217, 244, 0.64) 45%, rgba(69, 151, 211, 0.6) 46%, rgba(36, 108, 177, 0.62));
-  border-bottom: 1px solid rgba(0, 60, 120, 0.34);
-  border-radius: 6px 6px 0 0;
-  color: #09284a;
-  text-shadow: 0 1px rgba(255, 255, 255, 0.72);
-}
-
-body.theme-aero .terminal-container {
-  left: 24px;
-  width: min(60vw, 820px);
-}
-
-body.theme-aero .terminal-body {
-  background: rgba(255, 255, 255, 0.78);
-  margin: 6px;
-  border: 1px solid rgba(69, 103, 132, 0.46);
+body.theme-neo .analog-hand.minute {
+  background: var(--border);
+  width: 3px;
   border-radius: 2px;
 }
 
-body.theme-aero .cmd-input {
-  color: #07192a;
+body.theme-neo .analog-hand.second {
+  background: #f5a0a0;
+  width: 2px;
 }
 
-body.theme-aero .analog-clock {
-  right: 30px;
-  width: 220px;
-  height: 220px;
+body.theme-neo .analog-pin {
+  background: var(--border);
+  border-color: var(--border);
+  width: 8px;
+  height: 8px;
 }
 
-body.theme-aero .analog-face {
-  background: linear-gradient(145deg, rgba(12, 23, 36, 0.72), rgba(8, 15, 24, 0.46));
-  border: 1px solid rgba(255, 255, 255, 0.66);
-  box-shadow: inset 0 1px rgba(255, 255, 255, 0.52), 0 18px 42px rgba(0, 35, 76, 0.42);
-  backdrop-filter: blur(18px) saturate(1.25);
+/* ── Terminal — center, big ── */
+body.theme-neo .terminal-container {
+  position: fixed !important;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) !important;
+  width: 58%;
+  height: 48%;
+  min-width: 500px;
+  z-index: 8;
+  margin: 0 !important;
 }
 
-body.theme-aero .analog-mark {
-  color: #ffffff;
-  text-shadow: 0 1px 2px #000000;
+body.theme-neo .terminal-window {
+  background: var(--neo-terminal);
+  border: 3px solid var(--border);
+  border-radius: 14px;
+  box-shadow: none;
+  width: 100%;
+  height: 100%;
 }
 
-body.theme-aero .analog-hand.hour,
-body.theme-aero .analog-hand.minute,
-body.theme-aero .analog-pin {
-  background: #ffffff;
+body.theme-neo .terminal-titlebar {
+  background: var(--border);
+  border-radius: 11px 11px 0 0;
+  border-bottom: none;
+  padding: 10px 14px;
 }
 
-body.theme-aero .note-card {
-  background: rgba(255, 255, 255, 0.64);
-  border: 1px solid rgba(90, 132, 168, 0.36);
-  border-left: 4px solid #1f6fb5;
-  border-radius: 4px;
+body.theme-neo .terminal-title {
+  color: #fff;
+  font-family: var(--font);
+  font-weight: 600;
+}
+
+body.theme-neo .dot.red { background: #f5a0a0; }
+body.theme-neo .dot.yellow { background: #f5d780; }
+body.theme-neo .dot.green { background: #7ed6a5; }
+
+body.theme-neo .terminal-body {
+  background: var(--neo-terminal);
+  border-radius: 0 0 11px 11px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+body.theme-neo .cmd-input {
+  font-family: 'JetBrains Mono', monospace;
+  color: #e0ddf5;
+}
+
+body.theme-neo .prompt .user { color: #B08BFF; }
+body.theme-neo .prompt .host { color: #7ed6a5; }
+body.theme-neo .prompt .at,
+body.theme-neo .prompt .colon,
+body.theme-neo .prompt .path,
+body.theme-neo .prompt .dollar { color: #8B85A0; }
+
+body.theme-neo .out-line { color: #e0ddf5; }
+body.theme-neo .out-line.success { color: #7ed6a5; }
+body.theme-neo .out-line.error { color: #f5a0a0; }
+body.theme-neo .out-line.info { color: #8bc5f5; }
+body.theme-neo .cmd-echo { color: #8B85A0; }
+
+/* ── Todo — bottom right ── */
+body.theme-neo .todo-panel {
+  position: fixed !important;
+  bottom: 24px;
+  right: 24px;
+  left: auto !important;
+  top: auto !important;
+  width: calc(50% - 36px);
+  max-height: 220px;
+  background: var(--neo-todo);
+  border: 3px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  z-index: 10;
+  overflow-y: auto;
+  transform: none !important;
+  margin: 0 !important;
+}
+
+body.theme-neo .todo-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+}
+
+body.theme-neo .todo-title {
+  color: var(--fg);
+  font-family: var(--font);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+body.theme-neo .todo-filters {
+  display: none;
+}
+
+body.theme-neo .todo-add-btn {
+  background: #fff;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  color: var(--fg);
+  font-family: var(--font);
+  font-weight: 700;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+body.theme-neo .todo-add-btn:hover {
+  background: var(--border);
+  color: #fff;
+}
+
+body.theme-neo .todo-item {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(45, 43, 61, 0.15);
+  border-radius: 0;
+  padding: 6px 0;
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--fg);
+  box-shadow: none;
+}
+
+body.theme-neo .todo-item:hover {
+  background: rgba(255, 255, 255, 0.4);
+  transform: none;
+  box-shadow: none;
+}
+
+body.theme-neo .todo-item.done .todo-text {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+
+body.theme-neo .todo-input {
+  background: #fff;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  color: var(--fg);
+  font-family: var(--font);
+}
+
+body.theme-neo .todo-completed-toggle {
+  font-family: var(--font);
+  font-size: 11px;
+  color: var(--fg2);
+}
+
+/* ── Modal (note editor) ── */
+body.theme-neo .modal {
+  background: #fff;
+  border: 3px solid var(--border);
+  border-radius: 14px;
+  box-shadow: none;
+}
+
+body.theme-neo .modal-header {
+  background: var(--neo-todo);
+  border-radius: 11px 11px 0 0;
+  border-bottom: 3px solid var(--border);
+  color: var(--fg);
+  font-family: var(--font);
+  font-weight: 700;
+}
+
+body.theme-neo .modal-btn {
+  background: #fff;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  color: var(--fg);
+  font-family: var(--font);
+  font-weight: 600;
+  box-shadow: none;
+}
+
+body.theme-neo .modal-btn:hover {
+  background: var(--border);
+  color: #fff;
+}
+
+body.theme-neo .modal-btn.delete {
+  border-color: #f5a0a0;
+  color: #c44;
+}
+
+body.theme-neo .modal-btn.delete:hover {
+  background: #f5a0a0;
+  color: #fff;
+}
+
+body.theme-neo .modal-toggle-preview {
+  background: transparent;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  color: var(--fg);
+  font-family: var(--font);
+  box-shadow: none;
+}
+
+body.theme-neo .modal-close {
+  color: var(--fg);
+}
+
+body.theme-neo .note-editor {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--fg);
+  background: #faf8ff;
+}
+
+/* ── Autocomplete ── */
+body.theme-neo .autocomplete-popup {
+  background: #fff;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+body.theme-neo .ac-item {
+  font-family: var(--font);
+  color: var(--fg);
+}
+
+body.theme-neo .ac-item.active {
+  background: var(--neo-calendar);
+}
+
+/* ── Kill all transitions and animations in neo ── */
+body.theme-neo *,
+body.theme-neo *::before,
+body.theme-neo *::after {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Exception: allow hover color change (instant, no transition) */
+body.theme-neo .ql-link:hover,
+body.theme-neo .todo-add-btn:hover,
+body.theme-neo .modal-btn:hover {
+  transition: none !important;
+}
+
+/* ── Layout grip/resize handles in neo ── */
+body.theme-neo .layout-resize-grip {
+  display: none;
+}
+
+
+/* ═══════════════════════════════════════════════════════
+   THEME: WIN7 — Hide all TabOS UI when active
+   The Win7 desktop is created dynamically by win7.js
+   ═══════════════════════════════════════════════════════ */
+body.theme-win7 {
+  background: #000 !important;
+  overflow: hidden;
+}
+
+body.theme-win7 .scanlines,
+body.theme-win7 .rain-bg,
+body.theme-win7 .top-bar,
+body.theme-win7 .terminal-container,
+body.theme-win7 .calendar-panel,
+body.theme-win7 .todo-panel,
+body.theme-win7 .analog-clock,
+body.theme-win7 .pomodoro-standalone,
+body.theme-win7 .sticky-panel,
+body.theme-win7 .fact-bar,
+body.theme-win7 .quick-links-bar {
+  display: none !important;
 }

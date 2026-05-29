@@ -18,10 +18,9 @@
   };
 
   const LAYOUT_THEMES = {
-    terminal: 'current terminal layout',
-    neo: 'neo brutalism layout',
-    liquid: 'liquid glass layout',
-    aero: 'Windows 7 aero layout',
+    terminal: 'terminal layout',
+    neo: 'pastel minimal layout',
+    win7: 'Windows 7 desktop',
   };
 
   let config = storage.loadConfig();
@@ -60,15 +59,24 @@
     document.body.classList.add(`theme-${config.layoutTheme}`);
     document.body.dataset.theme = config.layoutTheme;
 
-    const topBarName = document.getElementById('topBarName');
-    const terminalTitle = document.getElementById('terminalTitle');
     const promptUser = document.getElementById('promptUser');
     const promptHost = document.getElementById('promptHost');
-    if (topBarName) topBarName.textContent = `${config.user}@${config.host}`;
-    if (terminalTitle) terminalTitle.textContent = `${config.user}@${config.host}:~`;
     if (promptUser) promptUser.textContent = config.user;
     if (promptHost) promptHost.textContent = config.host;
     if (root.layout && root.layout.applyTheme) root.layout.applyTheme();
+
+    // Win7 desktop lifecycle
+    if (config.layoutTheme === 'win7' && root.win7) root.win7.init();
+    else if (root.win7) root.win7.hide();
+
+    // Quick links for neo
+    const qlBar = document.getElementById('quickLinksBar');
+    if (qlBar && root.shortcuts) {
+      const all = root.shortcuts.all();
+      qlBar.innerHTML = Object.entries(all).slice(0, 12).map(([key, val]) =>
+        `<a class="ql-link" href="${val.url}" title="${root.utils.escapeHtml(val.desc)}">${root.utils.escapeHtml(key)}</a>`
+      ).join('');
+    }
   }
 
   function show() {
@@ -83,7 +91,7 @@
     appendOutput(`rain: ${root.rain ? escapeHtml(root.rain.describe()) : 'not started'}`, 'info');
     appendOutput(`facts: ${root.facts ? escapeHtml(root.facts.mode()) : 'mixed'}`, 'info');
     appendOutput(`tasks: ${taskStats.active} active, ${taskStats.total} total`, 'info');
-    appendOutput('use /theme <terminal|neo|liquid|aero> or /config accent <color>', 'info');
+    appendOutput('use /theme <terminal|neo|win7> or /config accent <color>', 'info');
   }
 
   function handle(words, original) {
@@ -167,6 +175,20 @@
     }
     if (sub === 'storage') {
       appendOutput(`<pre>${escapeHtml(storage.describe().join('\n'))}</pre>`, 'info');
+      return;
+    }
+    if (sub === 'enable' || sub === 'disable') {
+      const widgetName = words[2];
+      if (!widgetName) return appendOutput(`usage: /config ${sub} <widget>`, 'error');
+      if (widgetName === 'terminal') return appendOutput('terminal cannot be toggled.', 'error');
+      const visible = sub === 'enable';
+      if (root.layout && root.layout.setWidgetVisible) {
+        const result = root.layout.setWidgetVisible(widgetName, visible);
+        if (result) appendOutput(`${widgetName}: ${visible ? 'enabled' : 'disabled'}`, 'success');
+        else appendOutput(`unknown widget: ${escapeHtml(widgetName)}. use /widget list`, 'error');
+      } else {
+        appendOutput('layout module not available.', 'error');
+      }
       return;
     }
     appendOutput('config edits identity, theme, accent, startup, 3d, and storage info.', 'error');

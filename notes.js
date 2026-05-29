@@ -66,7 +66,10 @@
     html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
     html = html.replace(/`(.+?)`/g, '<code>$1</code>');
     html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
-    html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+    html = html.replace(/(<li>[\s\S]*?<\/li>)/g, function(match) {
+      return '<ul>' + match + '</ul>';
+    });
+    html = html.replace(/<\/ul>\s*<ul>/g, '');
     html = html.replace(/\[(.+?)\]\((https?:\/\/.+?)\)/g, '<a href="$2" target="_blank">$1</a>');
     html = html.replace(/\n/g, '<br>');
     html = html.replace(/<\/(h[1-3]|pre|table|blockquote|hr|ul|div)><br>/g, '</$1>');
@@ -82,16 +85,31 @@
 
   function render() {
     document.querySelectorAll('.floating-note').forEach(el => el.remove());
-    els.container.innerHTML = notes.map((note, i) => (
-      `<article class="note-card" data-index="${i}">` +
+    els.container.innerHTML = notes.map((note, i) => {
+      const lines = note.split('\n');
+      const bodyText = lines.slice(1).join('\n').trim();
+      return `<article class="note-card" data-index="${i}">` +
         `<div class="note-card-title">${escapeHtml(truncate(note, 30))}</div>` +
-        `<div class="note-card-body">${renderMarkdown(note)}</div>` +
-      `</article>`
-    )).join('');
+        (bodyText ? `<div class="note-card-body">${renderMarkdown(bodyText)}</div>` : '') +
+      `</article>`;
+    }).join('');
     els.container.querySelectorAll('.note-card').forEach(card => {
       card.addEventListener('click', () => open(Number(card.dataset.index)));
     });
     setBlurred(notesShouldBlur());
+    updateTitleCount();
+  }
+
+  function updateTitleCount() {
+    const titleEl = document.getElementById('stickyTitle');
+    if (titleEl) titleEl.textContent = `[ notes.md ]  [ ${notes.length} ]`;
+  }
+
+  function addNote(text) {
+    if (!text || !text.trim()) return;
+    notes.push(text.trim());
+    save();
+    render();
   }
 
   function open(index) {
@@ -158,6 +176,7 @@
       save();
       render();
       close();
+      updateTitleCount();
     });
     els.remove.addEventListener('click', () => {
       if (editingIndex !== null) {
@@ -189,6 +208,9 @@
   root.notes = {
     init,
     all: () => notes.slice(),
+    count: () => notes.length,
     setBlurred,
+    add: addNote,
+    openNew: () => open(null),
   };
 })();

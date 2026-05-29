@@ -99,19 +99,24 @@
     activeCompletion: -1,
   };
 
+  // Output override support for Win7 CMD
   function appendOutput(html, cls = '') {
+    const target = root.core && root.core._outputOverride ? root.core._outputOverride : dom.output;
+    const scrollTarget = root.core && root.core._outputOverride ? root.core._outputOverride : dom.terminalBody;
     const div = document.createElement('div');
     div.className = `out-line ${cls}`;
     div.innerHTML = html;
-    dom.output.appendChild(div);
-    dom.terminalBody.scrollTop = dom.terminalBody.scrollHeight;
+    target.appendChild(div);
+    scrollTarget.scrollTop = scrollTarget.scrollHeight;
   }
 
   function echoCommand(command) {
+    const target = root.core && root.core._outputOverride ? root.core._outputOverride : dom.output;
     const div = document.createElement('div');
     div.className = 'cmd-echo';
-    div.textContent = `$ ${command}`;
-    dom.output.appendChild(div);
+    const prefix = root.core && root.core._echoPrefix ? root.core._echoPrefix : '$ ';
+    div.textContent = `${prefix}${command}`;
+    target.appendChild(div);
   }
 
   function saveHistory(command) {
@@ -159,6 +164,17 @@
     const startOffset = (firstDay + 6) % 7;
     const today = now.getDate();
 
+    // Collect due dates from todos
+    const dueDates = {};
+    if (root.todo && root.todo.all) {
+      root.todo.all().forEach(todo => {
+        if (todo.due && !todo.done) {
+          dueDates[todo.due] = dueDates[todo.due] || [];
+          dueDates[todo.due].push(todo.text);
+        }
+      });
+    }
+
     for (let i = 0; i < startOffset; i++) {
       const el = document.createElement('div');
       el.className = 'cal-day empty';
@@ -172,6 +188,16 @@
       el.className = 'cal-day';
       if (d === today) el.classList.add('today');
       if (dayOfWeek >= 5) el.classList.add('weekend');
+
+      const dateStr = formatDate(new Date(year, month, d));
+      if (dueDates[dateStr]) {
+        el.classList.add('has-due');
+        el.title = dueDates[dateStr].join(', ');
+        el.addEventListener('click', () => {
+          const tasks = dueDates[dateStr].map(t => `\u2022 ${t}`).join('\n');
+          appendOutput(`<pre>due ${escapeHtml(dateStr)}:\n${escapeHtml(tasks)}</pre>`, 'info');
+        });
+      }
       el.textContent = d;
       dom.calendarDays.appendChild(el);
     }
@@ -217,7 +243,6 @@
 
   function triggerKonami() {
     appendOutput('★ 30 extra lives granted ★', 'success');
-    // Brief rainbow accent cycle
     const colors = ['#ff0000','#ff8800','#ffff00','#00ff00','#0088ff','#8800ff','#ff00ff'];
     let i = 0;
     const originalAccent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
@@ -250,12 +275,10 @@
     parallax3dActive = enabled;
     if (enabled) {
       document.body.classList.add('parallax-3d');
-      // Tag static elements
       P3D_LAYERS.forEach(({ sel, depth }) => {
         const el = document.querySelector(sel);
         if (el) { el.classList.add('p3d-target'); el.dataset.p3dDepth = depth; }
       });
-      // Tag all floating notes
       document.querySelectorAll('.floating-note').forEach((el, i) => {
         el.classList.add('p3d-target');
         el.dataset.p3dDepth = 1.8 + i * 0.15;
@@ -308,6 +331,8 @@
     renderCalendar,
     routeTo,
     toggle3D,
+    _outputOverride: null,
+    _echoPrefix: null,
   };
 
   root.utils = {

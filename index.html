@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Press+Start+2P&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="win7.css">
 </head>
 
 <body class="theme-terminal">
@@ -17,9 +18,7 @@
 
   <div class="top-bar">
     <div class="top-left">
-      <span class="distro-icon">::</span>
-      <span class="distro-name" id="topBarName"></span>
-      <span class="separator">|</span>
+      <span class="distro-icon">▸</span>
       <span id="uptime" class="uptime"></span>
     </div>
     <div class="top-right">
@@ -111,7 +110,7 @@
 
   <div class="sticky-panel" id="stickyPanel">
     <div class="sticky-header">
-      <span class="sticky-title">[ notes.md ]</span>
+      <span class="sticky-title" id="stickyTitle">[ notes.md ]  [ 0 ]</span>
       <div class="sticky-actions">
         <button class="sticky-btn" id="addNoteBtn" title="Add note" type="button">+</button>
       </div>
@@ -138,6 +137,8 @@
       </div>
     </div>
   </div>
+
+  <div id="quickLinksBar" class="quick-links-bar"></div>
 
   <div class="fact-bar" id="factBar">
     <span class="fact-icon">></span>
@@ -199,6 +200,7 @@
   <script src="notes.js"></script>
   <script src="todo.js"></script>
   <script src="commands.js"></script>
+  <script src="win7.js"></script>
   <script src="script.js"></script>
   <script src="game.js"></script>
 </body>
