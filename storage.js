@@ -29,20 +29,16 @@
 
   const keys = {
     config: 'termConfig',
-    oldTheme: 'termTheme',
     userShortcuts: 'userShortcuts',
     disabledShortcuts: 'disabledShortcuts',
     history: 'cmdHistory',
     notes: 'stickyNotes',
     todos: 'todos',
     rain: 'rainSettings',
-    oldRain: 'asciiRain',
     factMode: 'factMode',
-    factCache: 'cachedFacts',
     pomodoro: 'pomodoro',
     leaderboard: 'chickenLeaderboard',
     blurState: 'blurState',
-    notePanelPos: 'notePanelPos',
     widgetLayout: 'widgetLayout',
     widgetVisibility: 'widgetVisibility',
   };
@@ -80,16 +76,23 @@
     },
     loadConfig() {
       const stored = safeJson(keys.config, {});
-      const migratedAccent = stored.accent || localStorage.getItem(keys.oldTheme);
-      return { ...DEFAULT_CONFIG, ...stored, accent: migratedAccent || DEFAULT_CONFIG.accent };
+      if (!stored || typeof stored !== 'object' || Array.isArray(stored)) return { ...DEFAULT_CONFIG };
+      const next = { ...DEFAULT_CONFIG };
+      Object.keys(DEFAULT_CONFIG).forEach(key => {
+        if (stored[key] !== undefined && typeof stored[key] === typeof DEFAULT_CONFIG[key]) {
+          next[key] = stored[key];
+        }
+      });
+      if (typeof next.user === 'string') next.user = next.user.slice(0, 50);
+      if (typeof next.host === 'string') next.host = next.host.slice(0, 50);
+      if (typeof next.distro === 'string') next.distro = next.distro.slice(0, 50);
+      return next;
     },
     saveConfig(config) {
       setJson(keys.config, config);
     },
     loadRain() {
-      const rain = { ...DEFAULT_RAIN, ...safeJson(keys.rain, {}) };
-      if (!localStorage.getItem(keys.rain) && localStorage.getItem(keys.oldRain) === 'on') rain.enabled = true;
-      return rain;
+      return { ...DEFAULT_RAIN, ...safeJson(keys.rain, {}) };
     },
     saveRain(rain) {
       setJson(keys.rain, rain);
@@ -109,11 +112,10 @@
         `${keys.notes}: sticky notes`,
         `${keys.todos}: tasks`,
         `${keys.rain}: rain engine settings`,
-        `${keys.factMode}, ${keys.factCache}: fact mode and offline cache`,
+        `${keys.factMode}: fact mode`,
         `${keys.pomodoro}: focus timer state`,
         `${keys.leaderboard}: chicken scores`,
         `${keys.blurState}: blur/privacy state`,
-        `${keys.notePanelPos}: notes panel position`,
         `${keys.widgetLayout}: per-theme widget geometry`,
         `${keys.widgetVisibility}: visible dashboard widgets`,
       ];

@@ -39,7 +39,6 @@
 
   const catalog = [
     ['help', 'commands'],
-    ['theme <name>', 'switch theme'],
     ['clear', 'clear'],
     ['time', 'current time'],
     ['history', 'recent commands'],
@@ -47,6 +46,7 @@
     ['config enable <widget>', 'show widget'],
     ['config disable <widget>', 'hide widget'],
     ['config accent <color>', 'accent color'],
+    ['config theme <name>', 'switch theme'],
     ['widget list', 'widgets'],
     ['widget toggle <name>', 'toggle widget'],
     ['shortcut list', 'shortcuts'],
@@ -143,7 +143,6 @@
     const compactHelp = {
       main: [
         'help / ?              commands',
-        'theme <name>          switch theme',
         'config                settings',
         'g: <query>            google search',
         'gpt <prompt>          ChatGPT',
@@ -159,16 +158,15 @@
         'export                backup to clipboard',
         'clear                 clear',
       ],
-      theme: ['theme terminal|neo|win7', 'config accent <color|#hex>'],
-      todo: ['todo list', 'todo add <task> [!] [due:YYYY-MM-DD]', 'todo done <id>', 'todo delete <id>', 'todo clear-done'],
+      todo: ['todo list', 'todo add <task> [!] [due:DD-MM-YYYY]', 'todo done <id>', 'todo delete <id>', 'todo clear-done'],
       rain: ['rain on|off', 'rain preset mist|calm|storm', 'rain intensity <0-100>'],
-      config: ['config user|host <name>', 'config accent <color>', 'config enable|disable <widget>', 'config startup on|off'],
+      config: ['config theme <terminal|neo>', 'config user|host <name>', 'config accent <color>', 'config enable|disable <widget>', 'config startup on|off'],
     };
     const key = topic && compactHelp[topic] ? topic : 'main';
     const lines = key === 'main'
       ? compactHelp[key].join('\n')
       : compactHelp[key].map(x => `/${x}`).join('\n');
-    const suffix = key === 'main' ? '\n\n/help theme, /help todo, /help rain, /help config' : '';
+    const suffix = key === 'main' ? '\n\n/help todo, /help rain, /help config' : '';
     core.appendOutput(`<pre>${escapeHtml(lines + suffix)}</pre>`, 'info');
   }
 
@@ -178,31 +176,44 @@
     core.appendOutput(`<pre>${escapeHtml(lines)}</pre>`, 'info');
   }
 
+  let gameScriptLoading = null;
+
+  function loadGameModule() {
+    if (typeof window.startGame === 'function') return Promise.resolve();
+    if (gameScriptLoading) return gameScriptLoading;
+    gameScriptLoading = new Promise((resolve, reject) => {
+      const existing = document.querySelector('script[data-lazy-module="game"]');
+      if (existing) existing.remove();
+      const script = document.createElement('script');
+      script.src = 'game.js';
+      script.dataset.lazyModule = 'game';
+      script.onload = () => {
+        if (typeof window.startGame === 'function') resolve();
+        else reject(new Error('game module loaded without startGame'));
+      };
+      script.onerror = () => reject(new Error('failed to load game.js'));
+      document.head.appendChild(script);
+    }).catch(err => {
+      gameScriptLoading = null;
+      throw err;
+    });
+    return gameScriptLoading;
+  }
+
   function launchGame(words) {
     const game = words[1] || 'chicken';
     const option = words[2] || 'medium';
     const allowed = ['chicken', 'snake', 'pacman', 'tetris'];
     if (!allowed.includes(game)) return core.appendOutput(`unknown game: ${escapeHtml(game)}. available: ${allowed.join(', ')}`, 'error');
     core.appendOutput(`launching ${escapeHtml(game)}${game === 'chicken' ? ` ${escapeHtml(option)}` : ''}...`, 'success');
-    setTimeout(() => {
-      if (typeof startGame === 'function') startGame(game, option);
-    }, 160);
+    loadGameModule().then(() => {
+      setTimeout(() => window.startGame(game, option), 160);
+    }).catch(() => {
+      core.appendOutput('failed to load game module.', 'error');
+    });
   }
 
-  function handleTheme(words) {
-    const theme = words[1];
-    const layouts = root.config.layouts ? root.config.layouts() : {};
-    if (!theme || theme === 'list') {
-      core.appendOutput(`current theme: ${escapeHtml(root.config.get().layoutTheme)}`, 'info');
-      core.appendOutput(`themes: ${escapeHtml(Object.keys(layouts).join(', '))}`, 'info');
-      return;
-    }
-    if (!root.config.setLayoutTheme(theme)) {
-      core.appendOutput(`unknown theme: ${escapeHtml(theme)}. use ${escapeHtml(Object.keys(layouts).join(', '))}`, 'error');
-      return;
-    }
-    core.appendOutput(`theme: ${escapeHtml(root.config.get().layoutTheme)}`, 'success');
-  }
+
 
   function chatGptPromptUrl(prompt) {
     const params = new URLSearchParams();
@@ -271,7 +282,8 @@
   }
 
   function handleCat(commandLine) {
-    const text = commandLine.slice(commandLine.toLowerCase().indexOf('cat') + 3).trim();
+    const catIdx = commandLine.search(/\bcat\b/i);
+    const text = catIdx >= 0 ? commandLine.slice(catIdx + 3).trim() : '';
     if (!text) {
       if (root.notes && root.notes.openNew) root.notes.openNew();
       else core.appendOutput('note editor opened.', 'info');
@@ -286,17 +298,19 @@
   }
 
   function handleExport() {
-    const data = {
-      notes: root.notes ? root.notes.all() : [],
-      todos: root.todo ? root.todo.all() : [],
-      shortcuts: userShortcuts,
-      config: root.config ? root.config.get() : {},
-    };
-    const json = JSON.stringify(data, null, 2);
-    navigator.clipboard.writeText(json).then(() => {
-      core.appendOutput('data copied to clipboard as JSON.', 'success');
-    }).catch(() => {
-      core.appendOutput('clipboard access denied. check browser permissions.', 'error');
+    confirm('export all data (notes, tasks, config) to clipboard? type Y/N to confirm.', () => {
+      const data = {
+        notes: root.notes ? root.notes.all() : [],
+        todos: root.todo ? root.todo.all() : [],
+        shortcuts: userShortcuts,
+        config: root.config ? root.config.get() : {},
+      };
+      const json = JSON.stringify(data, null, 2);
+      navigator.clipboard.writeText(json).then(() => {
+        core.appendOutput('data copied to clipboard as JSON.', 'success');
+      }).catch(() => {
+        core.appendOutput('clipboard access denied. check browser permissions.', 'error');
+      });
     });
   }
 
@@ -321,10 +335,9 @@
 
     if (base === 'layout') return handleLayout(words);
     if (base === 'widget' || base === 'widgets') return handleWidget(words);
-    if (base === 'theme') return handleTheme(words);
     if (base === 'config') return root.config.handle(words, commandLine);
     if (base === 'shortcut' || base === 'shortcuts') return handleShortcut(words, commandLine);
-    if (base === 'rain' || base === 'animation') return root.rain.handle(base === 'animation' ? ['rain', words[1]] : words);
+    if (base === 'rain') return root.rain.handle(words);
     if (base === 'fact') return root.facts.handle(words);
     if (base === 'todo') return root.todo.handle(words, commandLine);
     if (base === 'pomodoro') return root.todo.handlePomodoro(words);
@@ -424,8 +437,13 @@
     // Shortcut lookup
     const shortcuts = allShortcuts();
     if (shortcuts[lowerLine]) {
+      const url = shortcuts[lowerLine].url;
+      if (!/^https?:\/\//i.test(url)) {
+        core.appendOutput(`blocked: unsafe URL scheme in shortcut /${escapeHtml(lowerLine)}`, 'error');
+        return;
+      }
       core.appendOutput(`open: ${escapeHtml(shortcuts[lowerLine].desc)}`, 'success');
-      setTimeout(() => { window.location.href = shortcuts[lowerLine].url; }, 160);
+      setTimeout(() => { window.location.href = url; }, 160);
       return;
     }
 
@@ -435,8 +453,16 @@
   let pendingConfirm = null;
 
   function confirm(message, callback) {
+    if (pendingConfirm) {
+      core.appendOutput('answer the pending confirmation first.', 'error');
+      return false;
+    }
     pendingConfirm = { callback };
+    core.dom.cmdInput.disabled = true;
+    core.dom.cmdInput.placeholder = 'type Y/N...';
     core.appendOutput(message, 'info');
+    setTimeout(() => { core.dom.cmdInput.disabled = false; core.dom.cmdInput.focus(); }, 50);
+    return true;
   }
 
   function handleBlur(words) {
@@ -503,15 +529,15 @@
     confirm('this will erase all data. type Y to confirm, N to cancel.', () => {
       core.appendOutput('resetting all data...', 'error');
       setTimeout(() => {
-        localStorage.clear();
+        Object.values(storage.keys).forEach(k => localStorage.removeItem(k));
         location.reload();
       }, 600);
     });
   }
 
   // Known command names for slash-less execution
-  const KNOWN_COMMANDS = ['help','clear','cls','time','history','layout','widget','widgets','theme','config',
-    'shortcut','shortcuts','rain','animation','fact','todo','pomodoro','game','blur','reset','cat','export',
+  const KNOWN_COMMANDS = ['help','clear','cls','time','history','layout','widget','widgets','config',
+    'shortcut','shortcuts','rain','fact','todo','pomodoro','game','blur','reset','cat','export',
     'sudo','exit','hello','hi','coffee','hack','matrix','fortune','xkcd','42',
     'yt','gpt','claude','rd','g'];
 
@@ -521,13 +547,18 @@
 
     if (pendingConfirm) {
       core.echoCommand(command);
-      if (command.trim().toUpperCase() === 'Y') pendingConfirm.callback();
-      else core.appendOutput('cancelled.', 'info');
+      const answer = command.trim().toLowerCase();
+      const callback = pendingConfirm.callback;
       pendingConfirm = null;
+      core.dom.cmdInput.placeholder = '';
+      if (answer === 'y' || answer === 'yes') callback();
+      else core.appendOutput('cancelled.', 'info');
       return;
     }
 
-    core.saveHistory(command);
+    const cmdFirstWord = command.replace(/^\//, '').split(/\s+/)[0].toLowerCase();
+    const isKnownCmd = KNOWN_COMMANDS.includes(cmdFirstWord) || allShortcuts()[cmdFirstWord] || /^g:\s*/i.test(command) || command === '?';
+    if (isKnownCmd) core.saveHistory(command);
     core.echoCommand(command);
 
     if (command === '?') return showHelp();
@@ -554,8 +585,13 @@
     // Check shortcuts
     const shortcuts = allShortcuts();
     if (shortcuts[lowerCmd]) {
+      const url = shortcuts[lowerCmd].url;
+      if (!/^https?:\/\//i.test(url)) {
+        core.appendOutput(`blocked: unsafe URL scheme.`, 'error');
+        return;
+      }
       core.appendOutput(`open: ${escapeHtml(shortcuts[lowerCmd].desc)}`, 'success');
-      setTimeout(() => { window.location.href = shortcuts[lowerCmd].url; }, 160);
+      setTimeout(() => { window.location.href = url; }, 160);
       return;
     }
 
@@ -593,6 +629,7 @@
   function init() {
     root.core.dom.cmdInput.focus();
     restoreBlurState();
+    if (root.config && root.config.apply) root.config.apply();
   }
 
   root.shortcuts = { all: allShortcuts };

@@ -24,6 +24,8 @@
   let completedExpanded = false;
   let draggedIndex = null;
   let pomodoro = storage.loadPomodoro();
+  let todoVersion = 0;
+  let pomodoroInterval = null;
 
   function makeId() {
     return `t${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
@@ -44,8 +46,14 @@
     return next;
   }
 
+  let calTimer = null;
   function saveTodos() {
     storage.setJson(storage.keys.todos, todos);
+    todoVersion++;
+    clearTimeout(calTimer);
+    calTimer = setTimeout(() => {
+      if (root.core && root.core.renderCalendar) root.core.renderCalendar();
+    }, 300);
   }
 
   function parseTodoInput(raw) {
@@ -55,17 +63,14 @@
     let recur = 'none';
     let progress = 0;
 
-    if (text.startsWith('!')) {
-      priority = 'high';
-      text = text.slice(1).trim();
-    }
-    if (raw.split(/\s+/).includes('!')) priority = 'high';
+    // Check for standalone ! anywhere (including start)
+    if (/(^|\s)!(?=\s|$)/.test(text)) priority = 'high';
     text = text.replace(/(^|\s)!(?=\s|$)/g, ' ');
     text = text.replace(/\bpriority:(high|low)\b/gi, (_, p) => {
       priority = p.toLowerCase();
       return '';
     });
-    text = text.replace(/\bdue:([0-9]{4}-[0-9]{2}-[0-9]{2}|today|tomorrow)\b/gi, (_, d) => {
+    text = text.replace(/\bdue:([0-9]{2}-[0-9]{2}-[0-9]{4}|today|tomorrow)\b/gi, (_, d) => {
       due = parseDateValue(d);
       return '';
     });
@@ -158,12 +163,19 @@
     del.className = 'todo-delete';
     del.textContent = 'x';
 
+    // Use createElement instead of innerHTML to prevent XSS
     const details = document.createElement('div');
     details.className = 'todo-details';
-    details.innerHTML = `<span>#${index + 1}</span>`;
-    if (todo.due) details.innerHTML += `<span class="todo-due ${dueClass(todo.due)}">due ${escapeHtml(todo.due)}</span>`;
-    if (todo.recur !== 'none') details.innerHTML += `<span>recur ${escapeHtml(todo.recur)}</span>`;
-    details.innerHTML += `<span>${todo.progress}%</span>`;
+    function addDetail(parent, text, cls) {
+      const s = document.createElement('span');
+      if (cls) s.className = cls;
+      s.textContent = text;
+      parent.appendChild(s);
+    }
+    addDetail(details, `#${index + 1}`);
+    if (todo.due) addDetail(details, `due ${todo.due}`, `todo-due ${dueClass(todo.due)}`);
+    if (todo.recur !== 'none') addDetail(details, `recur ${todo.recur}`);
+    addDetail(details, `${todo.progress}%`);
 
     const progress = document.createElement('div');
     progress.className = 'todo-progress';
@@ -197,7 +209,8 @@
     div.addEventListener('dragover', e => e.preventDefault());
     div.addEventListener('drop', e => {
       e.preventDefault();
-      reorder(Number(e.dataTransfer.getData('text/plain') || draggedIndex), index);
+      const raw = parseInt(e.dataTransfer.getData('text/plain'), 10);
+      if (!isNaN(raw) && raw >= 0 && raw < todos.length) reorder(raw, index);
     });
     return div;
   }
@@ -214,7 +227,7 @@
     });
     const filtered = filter === 'all' ? active : active.filter(({ todo }) => todo.priority === filter);
     filtered.forEach(({ todo, index }) => els.list.appendChild(createItem(todo, index)));
-    if (!filtered.length && !active.length) els.list.innerHTML = '';
+    if (!filtered.length && !active.length) els.list.innerHTML = '<div style="color:var(--fg2);font-size:10px;padding:8px 4px;opacity:0.6">no tasks \u00b7 try /todo add "..."</div>';
     else if (!filtered.length) els.list.innerHTML = '<div style="color:var(--fg2);font-size:10px;padding:4px;">none in this filter</div>';
 
     if (completed.length) {
@@ -234,6 +247,9 @@
   }
 
   function byId(id) {
+    const normalized = String(id || '').replace(/^#/, '');
+    const stableIndex = todos.findIndex(todo => todo.id === normalized);
+    if (stableIndex >= 0) return { todo: todos[stableIndex], index: stableIndex };
     const index = Number(id) - 1;
     return { todo: todos[index], index };
   }
@@ -263,7 +279,7 @@
     if (sub === 'add') {
       const text = original.slice(original.toLowerCase().indexOf('add') + 3).trim();
       const todo = add(text);
-      if (!todo) appendOutput('usage: /todo add <task> [!] [due:YYYY-MM-DD] [recur:daily] [50%]', 'error');
+      if (!todo) appendOutput('usage: /todo add <task> [!] [due:DD-MM-YYYY] [recur:daily] [50%]', 'error');
       else appendOutput(`task added: ${escapeHtml(todo.text)}`, 'success');
       return;
     }
@@ -293,7 +309,7 @@
     }
     if (sub === 'due') {
       const { todo, index } = byId(words[2]);
-      if (!todo) return appendOutput('usage: /todo due <id> <YYYY-MM-DD|today|tomorrow|clear>', 'error');
+      if (!todo) return appendOutput('usage: /todo due <id> <DD-MM-YYYY|today|tomorrow|clear>', 'error');
       const next = words[3] === 'clear' ? null : parseDateValue(words[3]);
       if (words[3] !== 'clear' && !next) return appendOutput('invalid due date.', 'error');
       todo.due = next;
@@ -359,6 +375,9 @@
     pomodoro.running = true;
     pomodoro.remaining = left;
     pomodoro.endAt = Date.now() + left * 1000;
+    if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
     savePomodoro();
     renderPomodoro();
   }
@@ -388,9 +407,17 @@
         pomodoro.endAt = null;
         savePomodoro();
         appendOutput('pomodoro complete. take a clean break.', 'success');
+        if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+          new Notification('Pomodoro Complete', { body: 'Time for a break!', icon: 'icons/ter.png' });
+        }
       }
     }
     renderPomodoro();
+  }
+
+  function startPomodoroInterval() {
+    clearInterval(pomodoroInterval);
+    pomodoroInterval = setInterval(tickPomodoro, 1000);
   }
 
   function handlePomodoro(words) {
@@ -420,10 +447,26 @@
 
   function init() {
     if (pomodoro.running && remaining() <= 0) stopPomodoro();
-    saveTodos();
+    const raw = storage.getJson(storage.keys.todos, []);
+    if (JSON.stringify(todos) !== JSON.stringify(raw)) saveTodos();
     render();
     renderPomodoro();
-    setInterval(tickPomodoro, 1000);
+    startPomodoroInterval();
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        clearInterval(pomodoroInterval);
+      } else {
+        if (pomodoro.running) {
+          const left = remaining();
+          if (left < 0 || left > pomodoro.duration) {
+            stopPomodoro();
+            appendOutput('pomodoro reset: clock change detected.', 'info');
+          }
+        }
+        tickPomodoro();
+        startPomodoroInterval();
+      }
+    });
 
     document.querySelectorAll('.todo-filter').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -464,5 +507,6 @@
     add,
     stats: () => ({ active: todos.filter(t => !t.done).length, total: todos.length }),
     all: () => todos.slice(),
+    version: () => todoVersion,
   };
 })();

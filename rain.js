@@ -35,10 +35,10 @@
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (!AudioContext) return false;
     if (audioCtx) {
-      audioCtx.resume();
+      audioCtx.resume().catch(() => {});
       return true;
     }
-    audioCtx = new AudioContext();
+    try { audioCtx = new AudioContext(); } catch { return false; }
 
     const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 3, audioCtx.sampleRate);
     const data = buffer.getChannelData(0);
@@ -63,7 +63,7 @@
     high.connect(low);
     low.connect(rainGain);
     rainGain.connect(audioCtx.destination);
-    noiseSource.start();
+    audioCtx.resume().then(() => noiseSource.start()).catch(() => {});
     return true;
   }
 
@@ -226,7 +226,8 @@
     updateAudio();
     if (settings.enabled) {
       canvas.style.display = 'block';
-      if (!raf) raf = requestAnimationFrame(draw);
+      if (raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(draw);
     } else {
       canvas.style.display = 'none';
       if (raf) cancelAnimationFrame(raf);
@@ -294,7 +295,12 @@
       return;
     }
     if (sub === 'intensity') {
-      const n = clamp(words[2], 0, 100);
+      const raw = words[2];
+      if (raw === undefined || raw === '' || Number.isNaN(Number(raw))) {
+        appendOutput('usage: /rain intensity <0-100>', 'error');
+        return;
+      }
+      const n = clamp(Number(raw), 0, 100);
       update({ intensity: n });
       appendOutput(`rain intensity: ${n}`, 'success');
       return;

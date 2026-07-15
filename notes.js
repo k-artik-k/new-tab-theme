@@ -4,14 +4,7 @@
   const { escapeHtml } = root.utils;
 
   let notes = storage.getJson(storage.keys.notes, []);
-  const oldSeedNotes = [
-    '# Welcome\nYour sticky notes live here.\n- Click to edit\n- Markdown works',
-    '## Quick Links\n- [GITAM](https://login.gitam.edu)\n- [LeetCode](https://leetcode.com)',
-  ];
-  if (JSON.stringify(notes) === JSON.stringify(oldSeedNotes)) {
-    notes = [];
-    storage.setJson(storage.keys.notes, notes);
-  }
+
 
   let editingIndex = null;
   let previewActive = false;
@@ -42,11 +35,38 @@
     els.panel.classList.toggle('blurred', on);
   }
 
+  function decodeBasicEntities(value) {
+    return String(value)
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>');
+  }
+
+  function sanitizeLinkHref(escapedUrl) {
+    // Decode HTML entities introduced by escapeHtml, then validate protocol
+    const raw = escapedUrl
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>');
+    try {
+      const url = new URL(raw);
+      if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
+      // Percent-encode attribute-unsafe chars instead of HTML-escaping
+      return url.href.replace(/"/g, '%22').replace(/'/g, '%27');
+    } catch {
+      return null;
+    }
+  }
+
   function renderMarkdown(md) {
     let html = escapeHtml(md);
 
     html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => `<pre><code>${code.trim()}</code></pre>`);
-    html = html.replace(/^(\|.+\|)\n(\|[\s\-:|]+\|)\n((?:\|.+\|\n?)+)/gm, (_, header, sep, body) => {
+    html = html.replace(/^(\|.+\|)\s*\n(\|[\s\-:|]+\|)\s*\n((?:\|.+\|\s*\n?)+)/gm, (_, header, sep, body) => {
       const thCells = header.split('|').filter(c => c.trim()).map(c => `<th>${c.trim()}</th>`).join('');
       const rows = body.trim().split('\n').map(row => {
         const cells = row.split('|').filter(c => c.trim()).map(c => `<td>${c.trim()}</td>`).join('');
@@ -66,11 +86,12 @@
     html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
     html = html.replace(/`(.+?)`/g, '<code>$1</code>');
     html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
-    html = html.replace(/(<li>[\s\S]*?<\/li>)/g, function(match) {
-      return '<ul>' + match + '</ul>';
+    html = html.replace(/(?:^<li>.*<\/li>\n?)+/gm, match => `<ul>${match.replace(/\n/g, '')}</ul>`);
+    html = html.replace(/\[(.+?)\]\((https?:\/\/.+?)\)/g, (_, text, url) => {
+      const safeUrl = sanitizeLinkHref(url);
+      if (!safeUrl) return text;
+      return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${text}</a>`;
     });
-    html = html.replace(/<\/ul>\s*<ul>/g, '');
-    html = html.replace(/\[(.+?)\]\((https?:\/\/.+?)\)/g, '<a href="$2" target="_blank">$1</a>');
     html = html.replace(/\n/g, '<br>');
     html = html.replace(/<\/(h[1-3]|pre|table|blockquote|hr|ul|div)><br>/g, '</$1>');
     html = html.replace(/<br><(h[1-3]|pre|table|blockquote|hr|ul|div)/g, '<$1');
@@ -96,6 +117,9 @@
     els.container.querySelectorAll('.note-card').forEach(card => {
       card.addEventListener('click', () => open(Number(card.dataset.index)));
     });
+    if (!notes.length) {
+      els.container.innerHTML = '<div style="color:var(--fg2);font-size:10px;padding:8px 4px;opacity:0.6">no notes · try /cat "..."</div>';
+    }
     setBlurred(notesShouldBlur());
     updateTitleCount();
   }
@@ -107,7 +131,7 @@
 
   function addNote(text) {
     if (!text || !text.trim()) return;
-    notes.push(text.trim());
+    notes.push(text.trim().slice(0, 20000));
     save();
     render();
   }
@@ -169,7 +193,7 @@
 
     els.add.addEventListener('click', () => open(null));
     els.save.addEventListener('click', () => {
-      const text = els.editor.value.trim();
+      const text = els.editor.value.trim().slice(0, 20000);
       if (!text) return;
       if (editingIndex === null) notes.push(text);
       else notes[editingIndex] = text;

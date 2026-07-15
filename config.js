@@ -20,7 +20,6 @@
   const LAYOUT_THEMES = {
     terminal: 'terminal layout',
     neo: 'pastel minimal layout',
-    win7: 'Windows 7 desktop',
   };
 
   let config = storage.loadConfig();
@@ -61,21 +60,23 @@
 
     const promptUser = document.getElementById('promptUser');
     const promptHost = document.getElementById('promptHost');
+    const titleEl = document.getElementById('terminalTitle');
     if (promptUser) promptUser.textContent = config.user;
     if (promptHost) promptHost.textContent = config.host;
+    if (titleEl) titleEl.textContent = `${config.user}@${config.host}`;
     if (root.layout && root.layout.applyTheme) root.layout.applyTheme();
 
-    // Win7 desktop lifecycle
-    if (config.layoutTheme === 'win7' && root.win7) root.win7.init();
-    else if (root.win7) root.win7.hide();
 
     // Quick links for neo
     const qlBar = document.getElementById('quickLinksBar');
     if (qlBar && root.shortcuts) {
       const all = root.shortcuts.all();
-      qlBar.innerHTML = Object.entries(all).slice(0, 12).map(([key, val]) =>
-        `<a class="ql-link" href="${val.url}" title="${root.utils.escapeHtml(val.desc)}">${root.utils.escapeHtml(key)}</a>`
-      ).join('');
+      qlBar.innerHTML = Object.entries(all)
+        .filter(([, val]) => /^https?:\/\//i.test(val.url))
+        .slice(0, 12)
+        .map(([key, val]) =>
+          `<a class="ql-link" href="${root.utils.escapeHtml(val.url)}" title="${root.utils.escapeHtml(val.desc)}">${root.utils.escapeHtml(key)}</a>`
+        ).join('');
     }
   }
 
@@ -91,7 +92,7 @@
     appendOutput(`rain: ${root.rain ? escapeHtml(root.rain.describe()) : 'not started'}`, 'info');
     appendOutput(`facts: ${root.facts ? escapeHtml(root.facts.mode()) : 'mixed'}`, 'info');
     appendOutput(`tasks: ${taskStats.active} active, ${taskStats.total} total`, 'info');
-    appendOutput('use /theme <terminal|neo|win7> or /config accent <color>', 'info');
+    appendOutput('use /config theme <terminal|neo> or /config accent <color>', 'info');
   }
 
   function handle(words, original) {
@@ -122,7 +123,7 @@
       if (!value || value === 'list') {
         appendOutput(`current theme: ${escapeHtml(config.layoutTheme)}`, 'info');
         appendOutput(`themes: ${Object.keys(LAYOUT_THEMES).join(', ')}`, 'info');
-        appendOutput('usage: /theme <name>', 'info');
+        appendOutput('usage: /config theme <name>', 'info');
         return;
       }
       if (value === 'reset') {
@@ -163,16 +164,6 @@
       }
       return;
     }
-    if (sub === '3d') {
-      const isOn = config.parallax3d === true;
-      root.commands.confirm(`${isOn ? 'disable' : 'enable'} 3D parallax effect? (Y/N)`, () => {
-        config.parallax3d = !isOn;
-        save();
-        root.core.toggle3D(config.parallax3d);
-        appendOutput(`3D parallax: ${config.parallax3d ? 'on' : 'off'}`, 'success');
-      });
-      return;
-    }
     if (sub === 'storage') {
       appendOutput(`<pre>${escapeHtml(storage.describe().join('\n'))}</pre>`, 'info');
       return;
@@ -191,7 +182,7 @@
       }
       return;
     }
-    appendOutput('config edits identity, theme, accent, startup, 3d, and storage info.', 'error');
+    appendOutput('config edits identity, theme, accent, startup, widgets, and storage info.', 'error');
   }
 
   root.config = {

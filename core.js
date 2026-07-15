@@ -20,7 +20,7 @@
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, '0');
     const d = String(date.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
+    return `${d}-${m}-${y}`;
   }
 
   function parseDateValue(value) {
@@ -32,13 +32,13 @@
       d.setDate(d.getDate() + 1);
       return formatDate(d);
     }
-    if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+    if (/^\d{2}-\d{2}-\d{4}$/.test(v)) return v;
     return null;
   }
 
   function parseLocalDate(value) {
     if (!value) return null;
-    const [y, m, d] = value.split('-').map(Number);
+    const [d, m, y] = value.split('-').map(Number);
     if (!y || !m || !d) return null;
     return new Date(y, m - 1, d);
   }
@@ -47,31 +47,77 @@
     return items[Math.floor(Math.random() * items.length)];
   }
 
+  function parseExpr(str) {
+    let pos = 0;
+    function peek() {
+      while (pos < str.length && /\s/.test(str[pos])) pos++;
+      return str[pos] || '';
+    }
+    function parsePrimary() {
+      peek();
+      if (str[pos] === '(') {
+        pos++;
+        const v = parseAddSub();
+        peek();
+        if (str[pos] === ')') pos++; else throw new Error(')');
+        return v;
+      }
+      const match = str.slice(pos).match(/^(?:\d+(?:\.\d*)?|\.\d+)/);
+      if (!match) throw new Error('num');
+      pos += match[0].length;
+      return Number(match[0]);
+    }
+    function parseUnary() {
+      peek();
+      if (str[pos] === '-') { pos++; return -parseUnary(); }
+      if (str[pos] === '+') { pos++; return parseUnary(); }
+      return parsePow();
+    }
+    function parsePow() {
+      let b = parsePrimary();
+      peek();
+      if (pos + 1 < str.length && str[pos] === '*' && str[pos + 1] === '*') {
+        pos += 2;
+        const exp = parseUnary();
+        if (Math.abs(b) > 1 && Math.abs(exp) > 300) return Infinity;
+        b = b ** exp;
+      }
+      return b;
+    }
+    function parseMulDiv() {
+      let l = parseUnary();
+      while (true) {
+        peek();
+        if (str[pos] === '*' && str[pos + 1] !== '*') { pos++; l *= parseUnary(); }
+        else if (str[pos] === '/') { pos++; l /= parseUnary(); }
+        else if (str[pos] === '%') { pos++; l %= parseUnary(); }
+        else break;
+      }
+      return l;
+    }
+    function parseAddSub() {
+      let l = parseMulDiv();
+      while (true) {
+        peek();
+        if (str[pos] === '+') { pos++; l += parseMulDiv(); }
+        else if (str[pos] === '-') { pos++; l -= parseMulDiv(); }
+        else break;
+      }
+      return l;
+    }
+    const r = parseAddSub();
+    peek();
+    if (pos < str.length) throw new Error('end');
+    return r;
+  }
+
   function tryMath(expr) {
     const s = expr.trim();
     if (!s || s.startsWith('/')) return null;
-    if (!/^[\d(.\-]/.test(s) && !/^(sqrt|abs|sin|cos|tan|log|ln|pi|pow|min|max|round|floor|ceil)/i.test(s)) return null;
-    if (!/^[\d\s+\-*/().%^,a-z]+$/i.test(s)) return null;
-    let m = s
-      .replace(/\^/g, '**')
-      .replace(/\bsqrt\b/gi, 'Math.sqrt')
-      .replace(/\babs\b/gi, 'Math.abs')
-      .replace(/\bsin\b/gi, 'Math.sin')
-      .replace(/\bcos\b/gi, 'Math.cos')
-      .replace(/\btan\b/gi, 'Math.tan')
-      .replace(/\blog\b/gi, 'Math.log10')
-      .replace(/\bln\b/gi, 'Math.log')
-      .replace(/\bpi\b/gi, 'Math.PI')
-      .replace(/\bround\b/gi, 'Math.round')
-      .replace(/\bfloor\b/gi, 'Math.floor')
-      .replace(/\bceil\b/gi, 'Math.ceil')
-      .replace(/\bpow\b/gi, 'Math.pow')
-      .replace(/\bmin\b/gi, 'Math.min')
-      .replace(/\bmax\b/gi, 'Math.max');
-    m = m.replace(/(^|[+\-*/(%,\s])e($|[+\-*/%).,\s])/gi, '$1Math.E$2');
-    if (/[a-zA-Z]/.test(m.replace(/Math\.\w+/g, ''))) return null;
+    if (!/^[\d\s+\-*/().%^]+$/.test(s)) return null;
+    if (!/[+\-*/%^]/.test(s)) return null;
     try {
-      const result = new Function(`return (${m})`)();
+      const result = parseExpr(s.replace(/\^/g, '**'));
       return typeof result === 'number' && isFinite(result) ? result : null;
     } catch {
       return null;
@@ -99,24 +145,19 @@
     activeCompletion: -1,
   };
 
-  // Output override support for Win7 CMD
   function appendOutput(html, cls = '') {
-    const target = root.core && root.core._outputOverride ? root.core._outputOverride : dom.output;
-    const scrollTarget = root.core && root.core._outputOverride ? root.core._outputOverride : dom.terminalBody;
     const div = document.createElement('div');
     div.className = `out-line ${cls}`;
     div.innerHTML = html;
-    target.appendChild(div);
-    scrollTarget.scrollTop = scrollTarget.scrollHeight;
+    dom.output.appendChild(div);
+    dom.terminalBody.scrollTop = dom.terminalBody.scrollHeight;
   }
 
   function echoCommand(command) {
-    const target = root.core && root.core._outputOverride ? root.core._outputOverride : dom.output;
     const div = document.createElement('div');
     div.className = 'cmd-echo';
-    const prefix = root.core && root.core._echoPrefix ? root.core._echoPrefix : '$ ';
-    div.textContent = `${prefix}${command}`;
-    target.appendChild(div);
+    div.textContent = `$ ${command}`;
+    dom.output.appendChild(div);
   }
 
   function saveHistory(command) {
@@ -128,16 +169,17 @@
 
   function updateClock() {
     const now = new Date();
-    let h = now.getHours();
+    const rawH = now.getHours();
     const m = now.getMinutes();
     const s = now.getSeconds();
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    h = h % 12 || 12;
-    dom.clock.textContent = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')} ${ampm}`;
+    const ampm = rawH >= 12 ? 'PM' : 'AM';
+    const h12 = rawH % 12 || 12;
+    dom.clock.textContent = `${String(h12).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')} ${ampm}`;
     if (dom.analogHour && dom.analogMinute && dom.analogSecond) {
-      const hourAngle = ((h % 12) + m / 60) * 30;
+      const hourAngle = ((rawH % 12) + m / 60) * 30;
       const minuteAngle = (m + s / 60) * 6;
-      const secondAngle = s * 6;
+      const ms = now.getMilliseconds();
+      const secondAngle = (s + ms / 1000) * 6;
       dom.analogHour.style.transform = `translateX(-50%) rotate(${hourAngle}deg)`;
       dom.analogMinute.style.transform = `translateX(-50%) rotate(${minuteAngle}deg)`;
       dom.analogSecond.style.transform = `translateX(-50%) rotate(${secondAngle}deg)`;
@@ -149,6 +191,29 @@
     const m = Math.floor(diff / 60);
     const s = diff % 60;
     dom.uptime.textContent = `up ${m}m ${s}s`;
+  }
+
+  let cachedTodoVersion = null;
+  let cachedDueDates = {};
+
+  function getDueDates() {
+    if (!root.todo || !root.todo.all) {
+      cachedTodoVersion = null;
+      cachedDueDates = {};
+      return cachedDueDates;
+    }
+    const version = root.todo.version ? root.todo.version() : null;
+    if (version !== null && version === cachedTodoVersion) return cachedDueDates;
+    const dueDates = {};
+    root.todo.all().forEach(todo => {
+      if (todo.due && !todo.done) {
+        dueDates[todo.due] = dueDates[todo.due] || [];
+        dueDates[todo.due].push(todo.text);
+      }
+    });
+    cachedTodoVersion = version;
+    cachedDueDates = dueDates;
+    return cachedDueDates;
   }
 
   function renderCalendar() {
@@ -164,16 +229,7 @@
     const startOffset = (firstDay + 6) % 7;
     const today = now.getDate();
 
-    // Collect due dates from todos
-    const dueDates = {};
-    if (root.todo && root.todo.all) {
-      root.todo.all().forEach(todo => {
-        if (todo.due && !todo.done) {
-          dueDates[todo.due] = dueDates[todo.due] || [];
-          dueDates[todo.due].push(todo.text);
-        }
-      });
-    }
+    const dueDates = getDueDates();
 
     for (let i = 0; i < startOffset; i++) {
       const el = document.createElement('div');
@@ -204,18 +260,43 @@
   }
 
   function routeTo(url, message) {
+    if (!/^https?:\/\//i.test(url)) {
+      appendOutput('blocked: unsafe URL scheme.', 'error');
+      return;
+    }
     appendOutput(escapeHtml(message), 'success');
     setTimeout(() => {
       window.location.assign(url);
     }, 160);
   }
 
+  let clockInterval = null;
+  let uptimeInterval = null;
+
+  function startCoreIntervals() {
+    clearInterval(clockInterval);
+    clearInterval(uptimeInterval);
+    clockInterval = setInterval(updateClock, 1000);
+    uptimeInterval = setInterval(updateUptime, 1000);
+  }
+
   function initCore() {
     updateClock();
     updateUptime();
     renderCalendar();
-    setInterval(updateClock, 1000);
-    setInterval(updateUptime, 1000);
+    startCoreIntervals();
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        clearInterval(clockInterval);
+        clearInterval(uptimeInterval);
+      } else {
+        updateClock();
+        updateUptime();
+        renderCalendar();
+        startCoreIntervals();
+      }
+    });
 
     // ALT key blur reveal
     document.addEventListener('keydown', e => {
@@ -224,100 +305,8 @@
     document.addEventListener('keyup', e => {
       if (e.key === 'Alt') document.body.classList.remove('alt-reveal');
     });
-
-    // Konami code detector
-    const konamiSeq = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
-    let konamiIdx = 0;
-    document.addEventListener('keydown', e => {
-      if (e.key === konamiSeq[konamiIdx] || e.key.toLowerCase() === konamiSeq[konamiIdx]) {
-        konamiIdx++;
-        if (konamiIdx === konamiSeq.length) {
-          konamiIdx = 0;
-          triggerKonami();
-        }
-      } else {
-        konamiIdx = 0;
-      }
-    });
   }
 
-  function triggerKonami() {
-    appendOutput('★ 30 extra lives granted ★', 'success');
-    const colors = ['#ff0000','#ff8800','#ffff00','#00ff00','#0088ff','#8800ff','#ff00ff'];
-    let i = 0;
-    const originalAccent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
-    const interval = setInterval(() => {
-      document.documentElement.style.setProperty('--accent', colors[i % colors.length]);
-      i++;
-      if (i >= colors.length * 2) {
-        clearInterval(interval);
-        document.documentElement.style.setProperty('--accent', originalAccent);
-      }
-    }, 150);
-  }
-
-  /* ── 3D Parallax ── */
-  let parallax3dActive = false;
-  let parallaxRAF = null;
-
-  const P3D_LAYERS = [
-    { sel: '.top-bar', depth: 0.4 },
-    { sel: '.terminal-window', depth: 1.0 },
-    { sel: '.todo-panel', depth: 1.4 },
-    { sel: '.sticky-panel', depth: 1.6 },
-    { sel: '.pomodoro-standalone', depth: 0.8 },
-    { sel: '.fact-bar', depth: 0.3 },
-    { sel: '.calendar-panel', depth: 1.2 },
-    { sel: '.analog-clock', depth: 1.1 },
-  ];
-
-  function toggle3D(enabled) {
-    parallax3dActive = enabled;
-    if (enabled) {
-      document.body.classList.add('parallax-3d');
-      P3D_LAYERS.forEach(({ sel, depth }) => {
-        const el = document.querySelector(sel);
-        if (el) { el.classList.add('p3d-target'); el.dataset.p3dDepth = depth; }
-      });
-      document.querySelectorAll('.floating-note').forEach((el, i) => {
-        el.classList.add('p3d-target');
-        el.dataset.p3dDepth = 1.8 + i * 0.15;
-      });
-      document.addEventListener('mousemove', onParallaxMove);
-    } else {
-      document.body.classList.remove('parallax-3d');
-      document.removeEventListener('mousemove', onParallaxMove);
-      document.querySelectorAll('.p3d-target').forEach(el => {
-        el.style.transform = '';
-        el.style.boxShadow = '';
-        el.classList.remove('p3d-target');
-        delete el.dataset.p3dDepth;
-      });
-    }
-  }
-
-  function onParallaxMove(e) {
-    if (parallaxRAF) return;
-    parallaxRAF = requestAnimationFrame(() => {
-      const cx = window.innerWidth / 2;
-      const cy = window.innerHeight / 2;
-      const dx = (e.clientX - cx) / cx;
-      const dy = (e.clientY - cy) / cy;
-      document.querySelectorAll('.p3d-target').forEach(el => {
-        const d = parseFloat(el.dataset.p3dDepth || '1');
-        const tx = dx * 8 * d;
-        const ty = dy * 6 * d;
-        const tz = 10 + 8 * d;
-        const rx = -dy * 2.5 * d;
-        const ry = dx * 2.5 * d;
-        const sx = 4 + dx * 6 * d;
-        const sy = 4 + dy * 6 * d;
-        el.style.transform = `perspective(600px) translate3d(${tx}px, ${ty}px, ${tz}px) rotateX(${rx}deg) rotateY(${ry}deg)`;
-        el.style.boxShadow = `${-sx}px ${-sy}px ${12 + 6 * d}px rgba(0,0,0,${0.25 + d * 0.06})`;
-      });
-      parallaxRAF = null;
-    });
-  }
 
   root.core = {
     dom,
@@ -330,9 +319,6 @@
     updateUptime,
     renderCalendar,
     routeTo,
-    toggle3D,
-    _outputOverride: null,
-    _echoPrefix: null,
   };
 
   root.utils = {

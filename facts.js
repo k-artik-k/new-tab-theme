@@ -4,7 +4,6 @@
   const { pick, escapeHtml } = root.utils;
   const { appendOutput } = root.core;
 
-  const FACT_CACHE_VERSION = 3;
   const FACT_LIBRARY = {
     science: [
       'A day on Venus is longer than a Venus year.',
@@ -46,17 +45,6 @@
 
   let mode = storage.getRaw(storage.keys.factMode) || 'mixed';
   let typeTimer = null;
-  let cache = null;
-
-  function bootCache() {
-    const stored = storage.getJson(storage.keys.factCache, null);
-    if (!stored || stored.version !== FACT_CACHE_VERSION) {
-      cache = { version: FACT_CACHE_VERSION, categories: FACT_LIBRARY };
-      storage.setJson(storage.keys.factCache, cache);
-    } else {
-      cache = { version: FACT_CACHE_VERSION, categories: { ...FACT_LIBRARY, ...stored.categories } };
-    }
-  }
 
   function contextFact() {
     const hour = new Date().getHours();
@@ -69,8 +57,8 @@
   function getFact(selected = mode) {
     if (selected === 'context' || selected === 'contextual') return contextFact();
     const normalized = selected === 'weird' || selected === 'internet' ? 'lore' : selected;
-    if (cache.categories[normalized]) return pick(cache.categories[normalized]);
-    return pick(Object.values(cache.categories).flat());
+    if (FACT_LIBRARY[normalized]) return pick(FACT_LIBRARY[normalized]);
+    return pick(Object.values(FACT_LIBRARY).flat());
   }
 
   function typeFact(text) {
@@ -114,16 +102,18 @@
       return;
     }
     if (sub === 'cache') {
-      const count = Object.values(cache.categories).flat().length;
-      appendOutput(`offline fact cache: ${count} facts in ${Object.keys(cache.categories).join(', ')}`, 'info');
+      const count = Object.values(FACT_LIBRARY).flat().length;
+      appendOutput(`fact library: ${count} facts in ${Object.keys(FACT_LIBRARY).join(', ')}`, 'info');
       return;
     }
     appendOutput('usage: /fact, /fact mode science|tech|weird|context|mixed, /fact cache', 'error');
   }
 
   function init() {
-    bootCache();
     show();
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) show();
+    });
   }
 
   root.facts = {

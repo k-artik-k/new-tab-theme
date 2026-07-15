@@ -1350,12 +1350,6 @@ body.alt-reveal .blurred {
   animation: noteFlash 0.5s ease;
 }
 
-/* 3D Parallax */
-.p3d-target {
-  transition: transform 0.12s ease-out;
-  will-change: transform;
-}
-
 /* Advanced note markdown */
 .note-card pre {
   background: var(--bg3);
@@ -2087,8 +2081,8 @@ body:not(.layout-edit) .layout-drag-handle {
   cursor: default;
 }
 
-/* Hide top bar for themes without it (aero uses it as taskbar) */
-body:not(.theme-terminal):not(.theme-aero) .top-bar {
+/* Hide top bar for non-terminal layouts */
+body:not(.theme-terminal) .top-bar {
   display: none !important;
 }
 
@@ -2574,26 +2568,3 @@ body.theme-neo .layout-resize-grip {
   display: none;
 }
 
-
-/* ═══════════════════════════════════════════════════════
-   THEME: WIN7 — Hide all TabOS UI when active
-   The Win7 desktop is created dynamically by win7.js
-   ═══════════════════════════════════════════════════════ */
-body.theme-win7 {
-  background: #000 !important;
-  overflow: hidden;
-}
-
-body.theme-win7 .scanlines,
-body.theme-win7 .rain-bg,
-body.theme-win7 .top-bar,
-body.theme-win7 .terminal-container,
-body.theme-win7 .calendar-panel,
-body.theme-win7 .todo-panel,
-body.theme-win7 .analog-clock,
-body.theme-win7 .pomodoro-standalone,
-body.theme-win7 .sticky-panel,
-body.theme-win7 .fact-bar,
-body.theme-win7 .quick-links-bar {
-  display: none !important;
-}

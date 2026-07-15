@@ -89,6 +89,13 @@
       if (e.target === noteEditor || e.target === todoInput) return;
       if (!e.ctrlKey && !e.altKey && !e.metaKey && e.key.length === 1) dom.cmdInput.focus();
     });
+
+    // Tap-outside-to-close autocomplete (mobile + desktop)
+    document.addEventListener('pointerdown', e => {
+      if (!dom.autocomplete.contains(e.target) && e.target !== dom.cmdInput) {
+        hideAutocomplete();
+      }
+    });
   }
 
   function boot() {
@@ -106,15 +113,37 @@
     if (config.startupAnim !== false) {
       runStartupAnimation();
     }
-    if (config.parallax3d) {
-      root.core.toggle3D(true);
-    }
   }
 
   function runStartupAnimation() {
     const termWindow = document.querySelector('.terminal-window');
     const output = root.core.dom.output;
+    const promptEl = document.querySelector('.prompt');
     if (termWindow) termWindow.classList.add('startup-flicker');
+
+    // Hide prompt during boot, show with typing effect after
+    if (promptEl) promptEl.style.visibility = 'hidden';
+
+    let skipped = false;
+    const timers = [];
+
+    function finishBoot() {
+      if (skipped) return;
+      skipped = true;
+      timers.forEach(t => clearTimeout(t));
+      output.innerHTML = '';
+      if (termWindow) termWindow.classList.remove('startup-flicker');
+      root.core.appendOutput(`welcome back, ${root.utils.escapeHtml(root.config.get().user)}. type /help or ? for commands.`, 'success');
+      // Typing effect for prompt
+      if (promptEl) {
+        promptEl.style.visibility = 'visible';
+        promptEl.classList.add('prompt-typing');
+        setTimeout(() => promptEl.classList.remove('prompt-typing'), 800);
+      }
+    }
+
+    // Skip on first keypress
+    document.addEventListener('keydown', finishBoot, { once: true });
 
     const bootLines = [
       { text: 'BIOS v3.7.1 ................... OK', delay: 80 },
@@ -125,22 +154,23 @@
     ];
 
     bootLines.forEach(({ text, delay }) => {
-      setTimeout(() => {
+      timers.push(setTimeout(() => {
+        if (skipped) return;
         root.core.appendOutput(root.utils.escapeHtml(text), 'boot-line');
-      }, delay);
+      }, delay));
     });
 
-    // Loading bar animation
     const barDelay = 650;
     const barSteps = 20;
     const barInterval = 40;
-    let barEl = null;
-    setTimeout(() => {
-      barEl = document.createElement('div');
+    timers.push(setTimeout(() => {
+      if (skipped) return;
+      const barEl = document.createElement('div');
       barEl.className = 'out-line boot-bar';
       output.appendChild(barEl);
       let step = 0;
       const barTimer = setInterval(() => {
+        if (skipped) { clearInterval(barTimer); return; }
         step++;
         const filled = '█'.repeat(step);
         const empty = '░'.repeat(barSteps - step);
@@ -148,17 +178,14 @@
         barEl.textContent = `[${filled}${empty}] ${pct}%`;
         if (step >= barSteps) {
           clearInterval(barTimer);
-          setTimeout(() => {
+          timers.push(setTimeout(() => {
+            if (skipped) return;
             root.core.appendOutput('Starting terminal service ... ready', 'boot-line');
-            setTimeout(() => {
-              output.innerHTML = '';
-              if (termWindow) termWindow.classList.remove('startup-flicker');
-              root.core.appendOutput(`welcome back, ${root.utils.escapeHtml(root.config.get().user)}. type /help or ? for commands.`, 'success');
-            }, 400);
-          }, 100);
+            timers.push(setTimeout(finishBoot, 400));
+          }, 100));
         }
       }, barInterval);
-    }, barDelay);
+    }, barDelay));
   }
 
   boot();
